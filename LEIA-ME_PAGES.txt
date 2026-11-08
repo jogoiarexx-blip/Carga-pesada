@@ -1,0 +1,5 @@
+Carga Pesada v0.14 — build Vite pronto
+Envie o conteúdo deste ZIP à raiz de uma branch.
+Settings > Pages > Deploy from a branch > sua branch > /(root).
+index.html e assets/ precisam ficar lado a lado.
+Para editar e usar Actions, use o pacote VITE_FONTE.
