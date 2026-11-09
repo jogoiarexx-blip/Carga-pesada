@@ -53,7 +53,8 @@ test('som contínuo usa trecho gravado após a partida, com emenda suave',()=>{
  const {ctx}=makeContext(),recording=makePCM(),loop=makeEngineIdleBuffer(recording,ctx);
  assert.ok(loop);assert.ok(loop.length<recording.length);
  const raw=recording.getChannelData(0),out=loop.getChannelData(0);
- assert.ok(Math.abs(out[0]-raw[0])>.1,'não pode reutilizar início da partida');
+ assert.equal(out[0],raw[Math.floor(recording.length*.42)],'trecho deve começar 42% após a partida');
+ assert.notEqual(out[0],raw[0],'início da partida não pode ser repetido');
  assert.ok(Math.abs(out[0]-out[out.length-1])<.035,'emenda de loop deve ser suave');
  assert.equal(makeEngineIdleBuffer(makePCM(1),ctx),null,'clipe muito curto não pode virar loop');
 });
