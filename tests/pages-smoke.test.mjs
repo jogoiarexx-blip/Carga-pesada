@@ -8,7 +8,7 @@ const html=text('index.html'),sw=text('sw.js'),manifest=JSON.parse(text('manifes
 const scripts=[...html.matchAll(/(?:src|href)="([^"#]+)"/g)].map(m=>m[1]).filter(s=>s.startsWith('./'));
 const entry=scripts.find(s=>/\.\/assets\/index-[\w-]+\.js/.test(s));
 test('publicação contém versão v0.20, novo menu e arquivos essenciais',()=>{
- assert.match(html,/class="build">v0\.(18|19|20)/);
+ assert.match(html,/class="build">v0\.(18|19|20|21)/);
  assert.match(html,/class="cp-home-layout"/);
  assert.match(html,/class="cp-main-actions"/);
  assert.match(html,/id="menuPanel"/);
@@ -21,7 +21,7 @@ test('HTML contém apenas links locais para assets da aplicação',()=>{
 });
 test('modo offline registra um cache versionado e inclui módulos compilados',()=>{
  assert.match(html,/serviceWorker\.register\('\.\/sw\.js'/);
- assert.match(sw,/carga-pesada-offline-v0\.(18|19|20)/);
+ assert.match(sw,/carga-pesada-offline-v0\.(18|19|20|21)/);
  assert.match(sw,/self\.addEventListener\('install'/);
  assert.match(sw,/html\.matchAll/);
  assert.match(sw,/self\.addEventListener\('fetch'/);
