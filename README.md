@@ -4,7 +4,7 @@ Jogo de caminhões, fretes, oficina, duelos e história em JavaScript, Three.js 
 
 **Jogar agora:** https://jogoiarexx-blip.github.io/Carga-pesada/
 
-## Versão publicada — v0.18
+## Versão publicada — v0.21
 
 Menu principal completamente remodelado e **funcional**, seguindo a referência visual fornecida:
 - cinco botões laterais: Continuar, Contratos, Garagem, Opções e Extras;
@@ -37,3 +37,7 @@ npm run check:dist
 30 missões, seis caminhões, personalização de acessórios/carrocerias, duelos, economia, medalhas, músicas próprias, controles de teclado, touch e gamepad, backup/restauração de save.
 
 **QA:** 102 testes de código-fonte e build Vite aprovados. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
+
+## v0.21 — Rochedo 160 realista
+
+Cabine alta exclusiva, grade de radiador em profundidade, novos faróis, vidros, espelhos, estribos duplos, para-lamas e detalhamento dos **quatro eixos**. Código em [source/src/rochedo-160.mjs](source/src/rochedo-160.mjs) e [relatório de testes](source/docs/REV21_ROCHEDO_160_REALISTA.md). O save `carga-pesada-v1` continua compatível. A versão é compilada e publicada automaticamente pelo workflow Vite.
