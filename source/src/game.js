@@ -28,7 +28,7 @@ let savedRaw=null;try{savedRaw=localStorage.getItem('carga-pesada-v1');}catch{}
 let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,player,rival,traffic=[],cameraMode=0,clock=0,toastTimer,radioTimer,saveWarned=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.16';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.18';}
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);}
 applyGraphicsQuality();renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
@@ -87,7 +87,7 @@ function menuStage(on){environment.visible=!on;scene.background=on?null:new THRE
 function cleanupTraffic(){traffic.forEach(t=>scene.remove(t.mesh));traffic=[];if(rival){scene.remove(rival.mesh);disposeTruck(rival.mesh);rival=null;}}
 function showPage(page,updateHash=true){
  if(mode==='drive'||mode==='paused')return;
- currentPage=page;mode=page;decorationEpoch++;persist();document.body.dataset.screen=page;
+ closeMenuPanel();currentPage=page;mode=page;decorationEpoch++;persist();document.body.dataset.screen=page;
  for(const [id,key] of [['home','home'],['garage','garage'],['contractsPage','contracts']])$(id).classList.toggle('hidden',key!==page);
  for(const id of ['hud','result','pauseScreen','brief','duelIntro'])$(id).classList.add('hidden');$('header').classList.remove('hidden');finishGate.visible=false;cleanupTraffic();menuStage(true);
  document.querySelectorAll('[data-page]').forEach(button=>{button.classList.toggle('active',button.dataset.page===page);if(button.dataset.page===page)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
@@ -162,11 +162,55 @@ function persist(){try{localStorage.setItem('carga-pesada-v1',JSON.stringify(sav
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
 function showRadio(t){$('radioText').textContent=t;$('radio').classList.remove('hidden');radioTimer=clock+8;}
 let chapterFilter='all',timeFilter='all',statusFilter='all';
+
+// REV18: menu pages share the live career state; no decorative/inert navigation.
+let menuPanelOpen=false,menuPanelReturnFocus=null;
+function closeMenuPanel(){
+ const panel=$('menuPanel');if(!panel||panel.classList.contains('hidden'))return;
+ panel.classList.add('hidden');menuPanelOpen=false;
+ document.querySelectorAll('[data-menu-panel]').forEach(button=>button.setAttribute('aria-pressed','false'));
+ if(menuPanelReturnFocus?.isConnected)menuPanelReturnFocus.focus({preventScroll:true});
+ menuPanelReturnFocus=null;
+}
+function menuPanelMetric(label,value){return `<div class="cp-panel-stat"><small>${label}</small><strong>${value}</strong></div>`;}
+function showMenuPanel(which){
+ if(mode==='drive'||mode==='paused'||mode==='result')return;
+ if(!menuPanelOpen)menuPanelReturnFocus=document.activeElement;
+ const panel=$('menuPanel'),body=$('menuPanelContent');
+ const titles={profile:['CARREIRA · PORTO SALGUEIRO','Perfil da caminhoneira'],statistics:['A ESTRADA EM NÚMEROS','Estatísticas da carreira'],achievements:['JORNADA · MEDALHAS','Conquistas'],options:['AJUSTES DA OFICINA','Opções do jogo'],extras:['DOCUMENTOS E ACESSIBILIDADE','Extras da estrada']};
+ if(!titles[which])return;
+ $('menuPanelEyebrow').textContent=titles[which][0];$('menuPanelTitle').textContent=titles[which][1];
+ const done=save.campaign.completed.length, fleetCount=Object.keys(save.fleet).length;
+ const medals=Object.values(save.medals||{}), counts={bronze:medals.filter(v=>v===1).length,prata:medals.filter(v=>v===2).length,ouro:medals.filter(v=>v===3).length};
+ if(which==='profile'){
+  body.innerHTML=`<p>Você está construindo o legado da Oficina Farol. O progresso abaixo vem da carreira salva neste dispositivo.</p><div class="cp-panel-grid">${menuPanelMetric('CAMINHÃO EM USO',VEHICLES.find(v=>v.id===save.selected).name)}${menuPanelMetric('SALDO ATUAL',money(save.money))}${menuPanelMetric('SUA FROTA',fleetCount)}${menuPanelMetric('MISSÕES CONCLUÍDAS',done+'/'+CONTRACTS.length)}</div><div class="cp-panel-actions"><button id="panelBackup">BACKUP DA CARREIRA</button><button class="secondary" id="panelGarage">ABRIR GARAGEM</button></div>`;
+  $('panelBackup').onclick=()=>{closeMenuPanel();$('careerBtn').click()};$('panelGarage').onclick=()=>{closeMenuPanel();showPage('garage')};
+ }else if(which==='statistics'){
+  body.innerHTML=`<p>Estatísticas registradas em sua carreira. Os valores não incluem fretes que não foram concluídos com sucesso.</p><div class="cp-panel-grid">${menuPanelMetric('ENTREGAS',save.deliveries)}${menuPanelMetric('DUELOS VENCIDOS',save.wins)}${menuPanelMetric('MISSÕES DA HISTÓRIA',done+'/'+CONTRACTS.length)}${menuPanelMetric('RECORDES DE TEMPO',Object.keys(save.best||{}).length)}</div><div class="cp-panel-actions"><button id="panelContracts">VER CONTRATOS</button></div>`;
+  $('panelContracts').onclick=()=>{closeMenuPanel();showPage('contracts')};
+ }else if(which==='achievements'){
+  body.innerHTML=`<p>As medalhas são conquistadas ao completar fretes com bons tempos e carga preservada. Duelos vencidos também contam na carreira.</p><div class="cp-panel-grid">${menuPanelMetric('MEDALHAS DE OURO',counts.ouro)}${menuPanelMetric('MEDALHAS DE PRATA',counts.prata)}${menuPanelMetric('MEDALHAS DE BRONZE',counts.bronze)}${menuPanelMetric('DUELOS VENCIDOS',save.wins)}</div><p class="cp-panel-status">${done===CONTRACTS.length?'Campanha principal concluída!':'Faltam '+(CONTRACTS.length-done)+' missões para completar sua jornada.'}</p><div class="cp-panel-actions"><button id="panelMedals">IR PARA OS FRETES</button></div>`;
+  $('panelMedals').onclick=()=>{closeMenuPanel();showPage('contracts')};
+ }else if(which==='options'){
+  body.innerHTML=`<p>Configure o jogo. O áudio e a qualidade gráfica são os mesmos usados durante as viagens.</p><label class="cp-panel-field">QUALIDADE GRÁFICA<select id="menuGraphicsQuality"><option value="high">Alta · mais detalhes</option><option value="balanced">Equilibrada · recomendada</option><option value="eco">Econômica · maior desempenho</option></select></label><label class="cp-panel-field">VOLUME DA MÚSICA<input id="menuMusicVolume" type="range" min="0" max="1" step="0.01" aria-label="Volume da música do jogo"></label><p class="cp-panel-status" id="menuOptionsFeedback" role="status">As preferências são aplicadas e salvas automaticamente.</p><div class="cp-panel-actions"><button id="menuHelpOptions">VER CONTROLES</button></div>`;
+  $('menuGraphicsQuality').value=graphicsQuality;$('menuGraphicsQuality').onchange=e=>{graphicsQuality=normalizeGraphicsQuality(e.target.value);applyGraphicsQuality();$('graphicsQuality').value=graphicsQuality;try{localStorage.setItem('carga-pesada-graphics',graphicsQuality)}catch{}$('menuOptionsFeedback').textContent='Qualidade gráfica aplicada.'};
+  $('menuMusicVolume').value=musicVolume;$('menuMusicVolume').oninput=e=>{musicVolume=Number(e.target.value);save.musicVolume=musicVolume;$('musicVolume').value=musicVolume;music?.setVolume(musicVolume);persist();$('menuOptionsFeedback').textContent='Volume atualizado.'};
+  $('menuHelpOptions').onclick=()=>{closeMenuPanel();$('helpBtn').click()};
+ }else if(which==='extras'){
+  body.innerHTML=`<p>Consulte as orientações da estrada, faça uma cópia da carreira para outro navegador ou prepare o próximo contrato.</p><div class="cp-panel-actions"><button id="panelHelp">CONTROLES E TUTORIAL</button><button class="secondary" id="panelCareer">EXPORTAR / IMPORTAR SAVE</button><button class="secondary" id="panelToContracts">CONTRATOS</button></div><p class="cp-panel-status">Frequência 17 · “Cuida do Aurora que ele cuida de você.” — Seu Nilo</p>`;
+  $('panelHelp').onclick=()=>{closeMenuPanel();$('helpBtn').click()};$('panelCareer').onclick=()=>{closeMenuPanel();$('careerBtn').click()};$('panelToContracts').onclick=()=>{closeMenuPanel();showPage('contracts')};
+ }
+ document.querySelectorAll('[data-menu-panel]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.menuPanel===which?'true':'false'));
+ panel.classList.remove('hidden');menuPanelOpen=true;panel.focus({preventScroll:true});
+}
+
 function renderHome(){
  persist();const next=nextMission(save),done=save.campaign.completed.length;$('homeNextMission').textContent=next?CONTRACTS.find(c=>c.id===next).name:'Contratos concluídos podem ser repetidos';$('homeFleetSummary').textContent=Object.keys(save.fleet).length+(Object.keys(save.fleet).length>1?' caminhões':' caminhão')+' · '+VEHICLES.find(v=>v.id===save.selected).name;
  $('chapterProgress').textContent=`${done} / ${CONTRACTS.length} MISSÕES · ${next?'CAMPANHA EM ANDAMENTO':'HISTÓRIA CONCLUÍDA'}`;
  $('chapterHint').textContent=next?`Próxima: ${CONTRACTS.find(c=>c.id===next).name} · ${CONTRACTS.find(c=>c.id===next).night?'NOITE':'DIA'}`:'O legado de Teresa continua. Todos os contratos podem ser repetidos.';
- $('continue').innerHTML=(next?'CONTINUAR CARREIRA':'FAZER UM FRETE')+' <span>↗</span>';
+ $('continue').querySelector('.cp-action-label').textContent=next?'CONTINUAR':'FAZER FRETE';
+ $('homeFleetCount').textContent=Object.keys(save.fleet).length+' caminhão'+(Object.keys(save.fleet).length===1?'':'ões');
+ $('homeCampaignName').textContent=next?CONTRACTS.find(c=>c.id===next).name:'História concluída';
  $('campaignFill').style.width=done/CONTRACTS.length*100+'%';
  $('contracts').innerHTML=CONTRACTS.filter(c=>(chapterFilter==='all'||String(c.chapter)===chapterFilter)&&(timeFilter==='all'||(c.night?'night':'day')===timeFilter)&&(statusFilter==='all'||(statusFilter==='open'?isUnlocked(c,save):save.campaign.completed.includes(c.id)))).map(c=>{const unlocked=isUnlocked(c,save),complete=save.campaign.completed.includes(c.id),info=STORY[c.id];return `<article class="contract ${c.id===next?'active':''} ${complete?'completed':''}"><div class="contract-top"><span>${c.tag} · ${c.night?'NOITE':'DIA'}</span><span>${complete?'✓':c.race?'⚑':'↗'}</span></div><h3>${c.name}</h3><p>${c.description}</p><div class="mission-status">${missionStatus(c.id,save)}</div>${save.best[c.id]?`<p class="contract-record">RECORDE ${formatTime(save.best[c.id])}${MEDALS[save.medals?.[c.id]]?' · '+MEDALS[save.medals[c.id]]:''}</p>`:''}<p class="contract-requirements">Preparo: ${requirementsFor(c).capacity} t · motor N${requirementsFor(c).engine} · freios N${requirementsFor(c).brakes}${requirementsFor(c).speed?' · ' + requirementsFor(c).speed+' km/h teóricos':''}</p><div class="first-bonus">${save.campaign.bonusesClaimed.includes(c.id)?'Bônus de estreia já recebido':`Estreia: + ${money(info.bonus)}`}</div><div class="contract-footer"><span class="reward"><small>FRETE BASE </small>${money(c.pay)}</span><button data-contract="${c.id}" ${unlocked?'':'disabled'}>${unlocked?complete?'REPETIR ↗':'VER ROTA ↗':'BLOQUEADA'}</button></div></article>`;}).join('')||'<p class="workshop-note">Nenhum contrato neste filtro. Altere capítulo, horário ou progresso.</p>';
  document.querySelectorAll('[data-contract]').forEach(b=>b.onclick=()=>brief(CONTRACTS.find(c=>c.id===b.dataset.contract)));
@@ -225,13 +269,15 @@ function renderWorld(){
 let last=performance.now();function frame(now){requestAnimationFrame(frame);const dt=Math.max(0,(now-last)/1000);last=now;if(mode==='drive'&&dt>1){pause();showRadio('A viagem foi pausada após uma interrupção. Continue quando estiver pronto.');}update(dt);updateHeadlights(headlights,player,night&&['drive','paused','result'].includes(mode));animateDecoration(player,clock,night);if(rival)animateDecoration(rival.mesh,clock,night);renderWorld();}replacePlayer();showPage(pageFromHash(location.hash),false);camera.position.copy(point(9,13,7));requestAnimationFrame(frame);$('loading').classList.add('hidden');
 $('continue').onclick=()=>brief(CONTRACTS.find(c=>c.id===nextMission(save))||CONTRACTS.find(c=>c.id==='m02'));
  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>showPage(button.dataset.page));
+ document.querySelectorAll('[data-menu-panel]').forEach(button=>button.onclick=()=>showMenuPanel(button.dataset.menuPanel));
+ $('closeMenuPanel').onclick=closeMenuPanel;
  document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;paintChoice=null;renderGarage();updateGaragePreview(true);});
  $('previewZoom').oninput=e=>previewDistance=Number(e.target.value);$('rotateLeft').onclick=()=>{previewSpin=false;previewAngle-=.35;};$('rotateRight').onclick=()=>{previewSpin=false;previewAngle+=.35;};$('spinModel').onclick=()=>{previewSpin=!previewSpin;$('spinModel').setAttribute('aria-pressed',previewSpin?'true':'false');};
  for(const [id,set] of [['chapterFilter',v=>chapterFilter=v],['timeFilter',v=>timeFilter=v],['statusFilter',v=>statusFilter=v]])$(id).onchange=e=>{set(e.target.value);renderHome();};
 
  $('helpBtn').onclick=()=>$('help').classList.remove('hidden');$('closeHelp').onclick=$('helpOk').onclick=()=>$('help').classList.add('hidden');$('pauseBtn').onclick=pause;$('resume').onclick=resume;$('abandon').onclick=()=>{save.fleet[save.selected].health=Math.max(15,run.health);persist();home();};
  window.addEventListener('hashchange',()=>{const target=pageFromHash(location.hash);if(mode==='drive'||mode==='paused'){pause();history.replaceState(null,'',pageHash(currentPage));return;}if(target!==currentPage)showPage(target,false);});
-window.addEventListener('keydown',e=>{if(mode==='drive'&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(e.repeat)return;if(e.key.toLowerCase()==='c'&&mode==='drive')cameraMode=(cameraMode+1)%3;if(e.key.toLowerCase()==='h'&&mode==='drive')horn();if(e.key==='Escape'||e.key.toLowerCase()==='p'){if(mode==='drive')pause();else if(mode==='paused')resume();else if(e.key==='Escape'&&mode==='garage')showPage('home');}});window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);window.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>delete keys[k]);pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();music?.stop();}else if(['home','garage','contracts'].includes(mode))music?.start('menu');});document.querySelectorAll('[data-key]').forEach(b=>{const reset=()=>keys[b.dataset.key]=false;b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[b.dataset.key]=true;};b.onpointerup=b.onpointercancel=b.onlostpointercapture=reset;});addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+window.addEventListener('keydown',e=>{if(mode==='drive'&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(e.repeat)return;if(e.key.toLowerCase()==='c'&&mode==='drive')cameraMode=(cameraMode+1)%3;if(e.key.toLowerCase()==='h'&&mode==='drive')horn();if(e.key==='Escape'&&menuPanelOpen){closeMenuPanel();return;}if(e.key==='Escape'||e.key.toLowerCase()==='p'){if(mode==='drive')pause();else if(mode==='paused')resume();else if(e.key==='Escape'&&mode==='garage')showPage('home');}});window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);window.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>delete keys[k]);pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();music?.stop();}else if(['home','garage','contracts'].includes(mode))music?.start('menu');});document.querySelectorAll('[data-key]').forEach(b=>{const reset=()=>keys[b.dataset.key]=false;b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[b.dataset.key]=true;};b.onpointerup=b.onpointercancel=b.onlostpointercapture=reset;});addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 // Read-only telemetry for repeatable checks and future playtests.
 window.cargaPesada={getState:()=>({mode,mission:mission?.id,run:run?{...run}:null,progress:{deliveries:save.deliveries,wins:save.wins,money:save.money},drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles})};
 
