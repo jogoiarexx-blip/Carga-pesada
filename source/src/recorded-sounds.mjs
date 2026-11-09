@@ -14,10 +14,13 @@ export function makeEngineIdleBuffer(recording,context){
  for(let channel=0;channel<recording.numberOfChannels;channel++){
   const raw=recording.getChannelData(channel),out=loop.getChannelData(channel);
   out.set(raw.subarray(start,end));
+  const boundary=out[0];
   for(let i=0;i<fade;i++){
-   const alpha=(i+1)/(fade+1);
+   // A última amostra deve coincidir com a primeira para eliminar o clique.
+   const phase=(i+1)/fade;
+   const alpha=phase*phase*(3-2*phase);
    const at=length-fade+i;
-   out[at]=out[at]*(1-alpha)+out[i]*alpha;
+   out[at]=out[at]*(1-alpha)+boundary*alpha;
   }
  }
  return loop;
