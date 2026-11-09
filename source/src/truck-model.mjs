@@ -7,6 +7,7 @@ import {buildEstradeiroCab,detailEstradeiroChassis} from './estradeiro-120.mjs';
 import {buildRochedoCab,detailRochedoAxles} from './rochedo-160.mjs';
 import {buildPeregrinoCab,detailPeregrinoChassis} from './peregrino-classico.mjs';
 import {buildFalcaoCab,detailFalcaoChassis} from './falcao-aero.mjs';
+import {buildImperadorCab,detailImperadorChassis} from './imperador-frontal.mjs';
 const material=(color,metalness=0)=>new THREE.MeshStandardMaterial({color,metalness,roughness:metalness?.38:.82,flatShading:true});
 export function buildTruck(vehicle,color,bodyId){
  const v=configuredVehicle(vehicle,bodyId),layout=vehicleLayout(v),root=new THREE.Group();root.name=v.name;
@@ -17,7 +18,7 @@ export function buildTruck(vehicle,color,bodyId){
  function cylinder(parent,radius,length,m,x,y,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,length,16),m);o.rotation.z=Math.PI/2;o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;}
  function rod(parent,a,b,r=.025,m=chrome){const delta=b.clone().sub(a),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),5),m);o.position.copy(a).add(b).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());parent.add(o);return o;}
  function axle(parent,z,front=false,heavy=true){const r=heavy?.66:.58,entry={parent,z,front,radius:r};axles.push(entry);cylinder(parent,.095,2.3,black,0,r,z);for(const side of [-1,1]){const steering=new THREE.Group();steering.position.set(side*1.17,r,z);parent.add(steering);steering.userData.dynamic=true;const spin=new THREE.Group();spin.userData={side,radius:r};steering.add(spin);const tyreGeometry=new THREE.LatheGeometry([[.58,-.18],[.86,-.18],[.97,-.12],[1,0],[.97,.12],[.86,.18],[.58,.18]].map(([rr,y])=>new THREE.Vector2(rr*r,y)),16),tyre=new THREE.Mesh(tyreGeometry,rubber);tyre.rotation.z=Math.PI/2;spin.add(tyre);cylinder(spin,r*.62,.38,chrome,0,0,0);cylinder(spin,r*.22,.4,black,0,0,0);for(let k=0;k<6;k++){const a=k*Math.PI/3;box(spin,.015,.055,.055,black,side*.2,Math.sin(a)*r*.4,Math.cos(a)*r*.4);}if(!front){cylinder(spin,r,.32,rubber,-side*.32,0,0);}wheels.push(spin);if(front)frontWheels.push(steering);box(parent,.12,.65,.5,black,side*1.24,.68,z+.5,'para-lama');}}
- const cab=new THREE.Group();cab.position.z=layout.front;root.add(cab);
+ const cab=new THREE.Group();cab.position.z=layout.front+(v.id==='imperador'?.10:0);root.add(cab);
  const heavy=v.cab!=='rigid',cabWidth=heavy?2.45:2.3;
  const chassisLength=v.category==='tractor'?v.tractorLength:v.length;
  for(const x of [-.76,.76])box(root,.2,.28,chassisLength,black,x,1.02,layout.front+chassisLength/2,'longarina');
@@ -32,6 +33,8 @@ export function buildTruck(vehicle,color,bodyId){
   root.userData.factoryExhaust=buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
  }else if(v.id==='falcao'){
   buildFalcaoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
+ }else if(v.id==='imperador'){
+  buildImperadorCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
  }else{
   const small=v.cab==='rigid',top=small?3.05:4.08,back=small?2.55:2.85;
   profile(cab,[[.13,.95],[.13,top-.6],[.48,top],[back-.2,top],[back,top-.25],[back,1]],cabWidth,paint,'cabine frontal');
@@ -42,7 +45,7 @@ export function buildTruck(vehicle,color,bodyId){
  }
 
  // Small details share the existing material batches.
- const customCab=['rochedo','peregrino','falcao'].includes(v.id);
+ const customCab=['rochedo','peregrino','falcao','imperador'].includes(v.id);
  const windY=v.cab==='rigid'?2.03:v.cab==='frontal'?3.06:2.98,windZ=v.cab==='classic'||v.cab==='aero'?1.975:-.005;
  if(!customCab)for(const side of [-1,1])rod(cab,new THREE.Vector3(side*.6,windY-.23,windZ),new THREE.Vector3(side*.17,windY+.12,windZ),.016,black);
  // Shared details: mirrors, doors, tanks, steps, lights and bumper.
@@ -96,6 +99,7 @@ export function buildTruck(vehicle,color,bodyId){
  if(v.id==='rochedo')detailRochedoAxles({root,wheels,layout,box});
  if(v.id==='peregrino')detailPeregrinoChassis({root,wheels,layout,box});
  if(v.id==='falcao')detailFalcaoChassis({root,wheels,layout,box});
+ if(v.id==='imperador')detailImperadorChassis({root,wheels,layout,box});
  root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
 }
 export function animateTruck(model,steering,speed,dt,trailerYaw=0){for(const wheel of model.userData.wheels)wheel.rotation.x-=speed*Math.max(0,dt)/(wheel.userData.radius||model.userData.wheelRadius||.64);for(const pivot of model.userData.frontWheels)pivot.rotation.y=-steering;if(model.userData.trailer)model.userData.trailer.rotation.y=trailerYaw;}
