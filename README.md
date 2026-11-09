@@ -4,7 +4,7 @@ Jogo de caminhões, fretes, oficina, duelos e história em JavaScript, Three.js 
 
 **Jogar agora:** https://jogoiarexx-blip.github.io/Carga-pesada/
 
-## Versão publicada — v0.24
+## Versão da aplicação — v0.27
 
 Menu principal completamente remodelado e **funcional**, seguindo a referência visual fornecida:
 - cinco botões laterais: Continuar, Contratos, Garagem, Opções e Extras;
@@ -36,7 +36,7 @@ npm run check:dist
 
 30 missões, seis caminhões, personalização de acessórios/carrocerias, duelos, economia, medalhas, músicas próprias, controles de teclado, touch e gamepad, backup/restauração de save.
 
-**QA:** testes de código-fonte e build Vite aprovados para a v0.24. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
+**QA:** 162 testes de código-fonte e build Vite aprovados para a v0.27. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
 
 ## v0.21 — Rochedo 160 realista
 
@@ -53,3 +53,12 @@ A atualização possui nove novos testes específicos do Peregrino, totalizando 
 Cabine alta e avançada sobre o motor, com para-brisa dividido, faróis duplos, grade cromada profunda, teto com defletor, portas, estribos, retrovisores, para-lamas, rodas e chassi remodelados. Mantém os cinco eixos do conjunto articulado, baú e lona, pintura, acessórios, saves e as novas artes brasileiras.
 
 O módulo dedicado está em [source/src/imperador-frontal.mjs](source/src/imperador-frontal.mjs), com [relatório](source/docs/REV24_IMPERADOR_FRONTAL_REALISTA.md) e [testes](source/tests/imperador-frontal.test.mjs). A suíte local passou 144 testes; a validação automatizada do GitHub Actions compilou também as artes atuais do projeto.
+
+
+## v0.27 — Áudio do motor sem repetição da partida
+
+O arquivo gravado `motor.ogg` contém um som de partida que anteriormente tocava em loop. Agora a partida é reproduzida **uma vez por corrida**; durante a viagem, apenas um trecho intermediário da gravação é repetido com transição suave. Pausar/retomar não reinicia a partida. São mantidos os volumes, a buzina, os sons de colisão e os saves.
+
+Detalhes e testes de regressão: [REV27 — correção de áudio](source/docs/REV27_CORRECAO_AUDIO_MOTOR.md).
+
+Para receber a versão atualizada quando o Pages terminar de publicar, recarregue o site com `Ctrl + F5`.
