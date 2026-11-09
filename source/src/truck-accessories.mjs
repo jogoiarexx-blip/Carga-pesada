@@ -14,7 +14,22 @@ export function addAccessories(model,group,config){
  activeCategory='visor';if(a.visor){const mesh=box(root,'viseira decorativa',c.width+.13,.11,[.32,.42,.53][type('visor')-1],chrome,0,c.visorY,front+c.windZ-.09);mesh.rotation.x=-.13;box(root,'borda da viseira',c.width+.15,.035,.055,dark,0,c.visorY-.05,front+c.windZ-.29,false);}
  activeCategory='roofRack';if(a.roofRack){const z=front+c.roofZ,w=c.width*.85,d=c.roofDepth;for(const side of [-1,1]){for(const dz of [-d/2,d/2])rod(root,'pé do bagageiro',.035,.18,edge,side*w/2,c.roof+.09,z+dz);bar(root,'bagageiro lateral',[side*w/2,c.roof+.24,z-d/2],[side*w/2,c.roof+.24,z+d/2]);}for(const dz of (type('roofRack')===1?[-d/2,d/2]:type('roofRack')===2?[-d/2,0,d/2]:[-d/2,-d/4,0,d/4,d/2]))bar(root,'travessa bagageiro',[-w/2,c.roof+.2,z+dz],[w/2,c.roof+.2,z+dz]);}
  activeCategory='roofSpots';if(a.roofSpots){const z=front+c.roofZ-c.roofDepth/2-.02,y=c.roof+.22;bar(root,'barra de faróis',[-c.width*.43,y-.1,z],[c.width*.43,y-.1,z],.045);for(const k of (type('roofSpots')===1?[-1,0,1]:type('roofSpots')===2?[-2,-1,0,1,2]:[-3,-2,-1,0,1,2,3])){const x=k*c.width*(type('roofSpots')===3?.115:.17);box(root,'carcaça farol teto',c.width*.12,.25,.2,dark,x,y,z);box(root,'aro farol teto',c.width*.125,.26,.06,chrome,x,y,z-.1);box(root,'farol auxiliar',c.width*.095,.18,.025,lamp,x,y,z-.138,false);}}
- activeCategory='bumper';if(a.bumper){box(root,'para-choque decorativo',c.width+.18,.35,.3,chrome,0,.86,front-.16);box(root,'entrada para-choque',c.width*.43,.12,.04,dark,0,.85,front-.329);for(const side of [-1,1]){box(root,'moldura farol baixo',.4,.22,.07,dark,side*c.width*.36,.85,front-.32);box(root,'luz para-choque',.29,.13,.025,lamp,side*c.width*.36,.85,front-.365,false);}}
+ activeCategory='bumper';if(a.bumper){
+  const level=type('bumper'),width=c.width+[.12,.24,.34][level-1],height=[.25,.34,.42][level-1],y=[.86,.84,.82][level-1],z=front-.19;
+  box(root,'para-choque decorativo',width,height,.34,level===1?edge:chrome,0,y,z);
+  box(root,'entrada para-choque',width*(level===3?.47:.39),.095,.045,dark,0,y,z-.19,false);
+  for(const side of [-1,1]){
+   // Wrap around the front corners without extending into the front wheels.
+   box(root,'lateral para-choque',.13,height,.48,level===1?edge:chrome,side*(width/2-.055),y,z+.20);
+   if(level===1){box(root,'ponteira urbana',.34,.09,.035,dark,side*width*.37,y,z-.19,false);}
+   if(level===2){box(root,'moldura luz auxiliar',.40,.19,.045,dark,side*width*.35,y,z-.20,false);box(root,'luz auxiliar para-choque',.30,.11,.025,lamp,side*width*.35,y,z-.23,false);}
+   if(level===3){
+    box(root,'moldura faixa LED',.68,.12,.04,dark,side*width*.29,y+.025,z-.20,false);
+    for(let i=0;i<4;i++)box(root,'lente LED para-choque',.105,.065,.025,lamp,side*(width*.18+i*.15),y+.025,z-.23,false);
+    box(root,'refletor lateral para-choque',.025,.08,.24,glow,side*(width/2+.016),y,z+.19,false);
+   }
+  }
+ }
  activeCategory='exhaust';if(a.exhaust)for(const side of (type('exhaust')===1?[1]:[-1,1])){const x=side*(c.width/2+.13),z=front+c.back-.13,height=c.roof-.83;rod(root,'escapamento vertical',type('exhaust')===3?.105:.075,height,chrome,x,.9+height/2,z);rod(root,'abertura escapamento',.054,.016,dark,x,.9+height+.01,z);for(const y of [1.35,c.roof-.25])bar(root,'abraçadeira escapamento',[side*c.width/2,y,z],[x,y,z],.026,edge);rod(root,'protetor escapamento',.095,.8,edge,x,1.5,z);}
  activeCategory='horns';if(a.horns)for(const side of (type('horns')===1?[1]:type('horns')===2?[-1,1]:[-1,0,1])){const x=side*c.width*.27,z=front+c.roofZ-.02,y=c.roof+.35;rod(root,'buzina cromada',.055,.45,chrome,x,y,z,Math.PI/2);const horn=new THREE.Mesh(new THREE.CylinderGeometry(.13,.055,.23,10),chrome);horn.rotation.x=-Math.PI/2;horn.position.set(x,y,z-.32);root.add(horn);rod(root,'boca da buzina',.106,.014,dark,x,y,z-.44,Math.PI/2);rod(root,'suporte buzina',.025,.22,edge,x,c.roof+.11,z);}
  activeCategory='antenna';if(a.antenna)for(const side of (type('antenna')===1?[1]:[-1,1])){const x=side*c.width*.43,z=front+c.roofZ+c.roofDepth/2-.06;rod(root,'base antena',.05,.09,chrome,x,c.roof+.04,z);rod(root,'antena',.011,(v.cab==='rigid'?.75:1)*(type('antenna')===1?.65:1),dark,x,c.roof+(v.cab==='rigid'?.45:.58),z);}
