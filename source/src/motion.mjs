@@ -1,0 +1,5 @@
+// Presentation interpolates the two latest fixed simulation poses, never the save.
+export function poseOf(run){return {s:run.s,x:run.x,speed:run.speed,steering:run.steering||0,lateral:run.lateral||0,trailerYaw:run.trailerYaw||0};}
+export function interpolatePose(previous,current,alpha){const t=Math.max(0,Math.min(1,alpha)),p=previous||current;return Object.fromEntries(Object.keys(poseOf(current)).map(k=>[k,(p[k]||0)+((current[k]||0)-(p[k]||0))*t]));}
+export function presentationPose(session,rival=false){const current=rival?session.rival:session.run;if(!current)return null;return interpolatePose(rival?session.previousRival:session.previousPose,current,session.accumulator/(1/60));}
+export function cameraPose(position,forward,spec,mode=0){const add=(distance,y,x=0)=>({x:position.x+forward.x*distance+x,y:position.y+y,z:position.z+forward.z*distance});if(mode===1)return {position:add(spec.length/2-(['classic','aero'].includes(spec.cab)?1.8:-.15),3.25),look:add(50,2.8)};if(mode===2)return {position:add(-25,12,8),look:add(15,0)};return {position:add(-Math.max(15,spec.length*.85+6),7),look:add(14,2)};}

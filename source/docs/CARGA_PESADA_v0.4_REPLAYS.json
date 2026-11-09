@@ -1,0 +1,53 @@
+{
+  "method": "Shared production simulation; automatic driver; traffic enabled; 30 FPS input; no rendering",
+  "rows": [
+    {
+      "mission": "m01",
+      "status": "success",
+      "seconds": 89.6,
+      "cargo": 100,
+      "health": 100,
+      "collisions": 0,
+      "net": 1476,
+      "bonus": 250,
+      "balance": 2926,
+      "rivalSeconds": null
+    },
+    {
+      "mission": "m02",
+      "status": "success",
+      "seconds": 118.22,
+      "cargo": 100,
+      "health": 100,
+      "collisions": 0,
+      "net": 1768,
+      "bonus": 400,
+      "balance": 5094,
+      "rivalSeconds": null
+    },
+    {
+      "mission": "m03",
+      "status": "success",
+      "seconds": 156.38,
+      "cargo": 100,
+      "health": 100,
+      "collisions": 0,
+      "net": 2398,
+      "bonus": 500,
+      "balance": 7992,
+      "rivalSeconds": null
+    },
+    {
+      "mission": "m04",
+      "status": "success",
+      "seconds": 115.55,
+      "cargo": 100,
+      "health": 100,
+      "collisions": 0,
+      "net": 2165,
+      "bonus": 700,
+      "balance": 10857,
+      "rivalSeconds": 13.48
+    }
+  ]
+}

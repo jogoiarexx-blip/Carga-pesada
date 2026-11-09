@@ -1,0 +1,41 @@
+name: Testar código-fonte Vite
+on:
+  push:
+    paths:
+      - 'source/**'
+      - '.github/workflows/source-ci.yml'
+  pull_request:
+    paths:
+      - 'source/**'
+      - '.github/workflows/source-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  testar-e-compilar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Instalar dependências travadas
+        run: npm ci
+      - name: Executar testes
+        run: npm test
+      - name: Compilar Vite
+        run: npm run build
+      - name: Conferir subpasta e assets
+        run: npm run check:dist
+      - name: Publicar build testado como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: carga-pesada-vite-dist
+          path: source/dist
+          if-no-files-found: error
+          retention-days: 7
