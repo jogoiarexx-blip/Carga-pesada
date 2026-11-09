@@ -1,0 +1,19 @@
+{
+  "name": "Carga Pesada — Santa Brava",
+  "short_name": "Carga Pesada",
+  "description": "Jogo de caminhões, fretes e rivalidades em Santa Brava",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10282b",
+  "theme_color": "#10282b",
+  "icons": [
+    {
+      "src": "./icons/carga-pesada.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

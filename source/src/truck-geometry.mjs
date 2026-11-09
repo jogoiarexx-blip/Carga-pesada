@@ -1,0 +1,3 @@
+import * as THREE from './vendor/three.module.js';
+export function bevelBox(w,h,d,r=.04){r=Math.min(r,w/4,h/4,d/4);const x=w/2-r,y=h/2-r,s=new THREE.Shape();s.moveTo(-x,-y);s.lineTo(x,-y);s.lineTo(x,y);s.lineTo(-x,y);s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth:d-2*r,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:r,bevelThickness:r});g.translate(0,0,-d/2+r);return g;}
+export function releaseTrees(trees){const gs=new Set(),ms=new Set(),ts=new Set();for(const root of trees)root?.traverse(o=>{if(o.geometry)gs.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m){ms.add(m);if(m.map)ts.add(m.map);}});gs.forEach(g=>g.dispose());ts.forEach(t=>t.dispose());ms.forEach(m=>m.dispose());}
