@@ -8,7 +8,7 @@ https://jogoiarexx-blip.github.io/Carga-pesada/
 
 ## Versão atual
 
-**v0.15 (08/11/2026)**: três perfis de qualidade gráfica (Alta, Equilibrada e Econômica) no menu de pausa e menos trabalho de desenho do minimapa/velocímetro (cerca de 10 Hz), sem alterar física, campanha ou saves. Veja [changelog](docs/VERSAO_0_15.md).
+**v0.16 (09/11/2026)**: modo offline progressivo via service worker, manifest de aplicativo e testes de integridade em GitHub Actions. Mantém as opções gráficas da v0.15, as 30 missões e os saves.nômica) no menu de pausa e menos trabalho de desenho do minimapa/velocímetro (cerca de 10 Hz), sem alterar física, campanha ou saves. Veja [changelog](docs/VERSAO_0_15.md).
 
 ## Estrutura do repositório
 
@@ -21,3 +21,11 @@ Para evoluir o jogo no código editável: use o pacote Vite (`src/`, `tests/`, `
 30 missões, seis modelos procedurais, 48 versões de peças, oficina, campanhas com diálogos, fretes e duelos, medalhas, músicas originais e backup/restauração da carreira.
 
 **Limites:** a v0.15 foi verificada com 95 testes no código-fonte e sintaxe do JS compilado; performance e experiência visual em WebGL/celular ainda precisam ser medidas em dispositivos reais.
+
+## v0.16 — Offline e verificações
+
+O jogo armazena os arquivos principais na primeira visita online (aproximadamente 3 MB). Depois que o service worker instalar, pode abrir sem conexão no mesmo navegador/dispositivo; a carreira continua no armazenamento local. Para atualizar, abra o jogo com internet e recarregue a página. A instalação como aplicativo depende do suporte do navegador; ícone SVG está incluído.
+
+A rotina [Verificar versão publicada](.github/workflows/verify-pages.yml) faz seis testes de integridade e checa a sintaxe do JavaScript sem acesso ao npm. O Pages continua publicado a partir da branch `main`, sem alterar o método de deploy.
+
+**Fonte Vite:** o ZIP editável v0.15 permanece separado, ainda não integrado à árvore do repositório. Este repositório contém os arquivos publicados e os testes de publicação, não o fonte completo.

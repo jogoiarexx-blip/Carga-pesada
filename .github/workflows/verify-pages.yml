@@ -1,0 +1,24 @@
+name: Verificar versão publicada do Carga Pesada
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verificar-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter repositório
+        uses: actions/checkout@v4
+      - name: Preparar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conferir JavaScript compilado
+        run: node --check assets/index-DHdQ5Cn1.js
+      - name: Conferir service worker
+        run: node --check sw.js
+      - name: Testar integridade do GitHub Pages
+        run: node --test tests/pages-smoke.test.mjs
