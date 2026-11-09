@@ -1,31 +1,44 @@
 # Carga Pesada — Santa Brava
 
-Jogo original de caminhões, entregas, oficinas e duelos, desenvolvido com Three.js e publicado no GitHub Pages.
+Jogo original de caminhões, fretes, oficina, duelos e história em Santa Brava, construído com JavaScript, Three.js e Vite.
 
-## Jogar
+**Jogar:** https://jogoiarexx-blip.github.io/Carga-pesada/
 
-https://jogoiarexx-blip.github.io/Carga-pesada/
+## Versões
 
-## Versão atual
+- **v0.16 — jogo publicado (09/11/2026):** suporte offline progressivo, PWA, três opções gráficas, minimapa e velocímetro otimizados.
+- **REV17 — manutenção e fonte integrado (09/11/2026):** código-fonte Vite versionado em [source/](source/), 97 testes e build Vite executados com sucesso no [GitHub Actions](https://github.com/jogoiarexx-blip/Carga-pesada/actions/runs/42620474020).
 
-**v0.16 (09/11/2026)**: modo offline progressivo via service worker, manifest de aplicativo e testes de integridade em GitHub Actions. Mantém as opções gráficas da v0.15, as 30 missões e os saves.nômica) no menu de pausa e menos trabalho de desenho do minimapa/velocímetro (cerca de 10 Hz), sem alterar física, campanha ou saves. Veja [changelog](docs/VERSAO_0_15.md).
+## Onde editar
 
-## Estrutura do repositório
+- [source/src/](source/src/): motor do jogo, caminhões, cenários, IA, HUD, garagem, efeitos e CSS.
+- [source/tests/](source/tests/): testes da campanha, física, sessões, veículos, upgrades, save e progressão.
+- [source/public/](source/public/): imagens, cenários e PWA.
+- [source/package.json](source/package.json) e [source/package-lock.json](source/package-lock.json): ferramentas e dependências fixadas.
+- [source/LEIA-ME_FONTE_GITHUB.md](source/LEIA-ME_FONTE_GITHUB.md): instruções de desenvolvimento e arquivo Three.js local.
 
-Esta é a versão **compilada para GitHub Pages**: `index.html` e `assets/` devem permanecer lado a lado. Os módulos ES e testes da versão editável estão no pacote separado `CARGA_PESADA_v0.15_VITE_FONTE.zip` entregue junto desta revisão. Não há `package.json` neste repositório: **não rode npm install/build aqui até importar a árvore Vite**.
+## Como trabalhar no fonte
 
-Para evoluir o jogo no código editável: use o pacote Vite (`src/`, `tests/`, `public/`, `package.json`, `package-lock.json`); rode `npm ci`, `npm test`, `npm run build` e `npm run check:dist`. A saída `dist/` pode então substituir o conteúdo publicado. O código-fonte editável deve ser importado ao repositório em uma migração posterior para que o GitHub Actions execute build e testes diretamente.
+Use **Node.js 22.12 ou superior**:
 
-## Progresso
+```bash
+cd source
+npm ci
+npm test
+npm run build
+npm run check:dist
+```
 
-30 missões, seis modelos procedurais, 48 versões de peças, oficina, campanhas com diálogos, fretes e duelos, medalhas, músicas originais e backup/restauração da carreira.
+O `pretest`/`prebuild` restaura e verifica o arquivo Three.js de um arquivo compactado existente no próprio repositório. O workflow [source-ci.yml](.github/workflows/source-ci.yml) valida a fonte automaticamente e disponibiliza `dist` como artefato.
 
-**Limites:** a v0.15 foi verificada com 95 testes no código-fonte e sintaxe do JS compilado; performance e experiência visual em WebGL/celular ainda precisam ser medidas em dispositivos reais.
+## Publicação segura
 
-## v0.16 — Offline e verificações
+A versão disponível no GitHub Pages ainda é servida a partir do **`index.html` e `assets/` na raiz**. A integração do fonte não substitui automaticamente o jogo em produção. Uma nova versão jogável deve passar nos testes, ser compilada com Vite e ter seu `dist/` publicado na raiz ou por um workflow Pages configurado para Actions.
 
-O jogo armazena os arquivos principais na primeira visita online (aproximadamente 3 MB). Depois que o service worker instalar, pode abrir sem conexão no mesmo navegador/dispositivo; a carreira continua no armazenamento local. Para atualizar, abra o jogo com internet e recarregue a página. A instalação como aplicativo depende do suporte do navegador; ícone SVG está incluído.
+**Salvamentos:** preservar a chave `carga-pesada-v1` e o formato de backup. Não apagar a pasta `assets/` da raiz até confirmar o novo build.
 
-A rotina [Verificar versão publicada](.github/workflows/verify-pages.yml) faz seis testes de integridade e checa a sintaxe do JavaScript sem acesso ao npm. O Pages continua publicado a partir da branch `main`, sem alterar o método de deploy.
+## Conteúdo
 
-**Fonte Vite:** o ZIP editável v0.15 permanece separado, ainda não integrado à árvore do repositório. Este repositório contém os arquivos publicados e os testes de publicação, não o fonte completo.
+30 missões, seis modelos, carrocerias, acessórios compráveis, duelos, oficina, economia, medalhas, músicas originais, backup/restauração da carreira e controles para teclado, celular e gamepad.
+
+Ainda faltam certificação visual em celulares/WebGL, ensaios prolongados das missões e evolução das físicas e cenários.
