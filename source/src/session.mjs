@@ -3,12 +3,13 @@ import {entryCheck,rivalProfile} from './progression.mjs';
 import {driveStep,clamp,sweptOverlap,trafficSpeed,crossingFraction,settlement,completeContract} from './core.mjs';
 import {VEHICLES,configuredVehicle} from './fleet.mjs';
 import {routeFor,roadCurvature,roadSlope} from './routes.mjs';
+import {createBossTraffic,planRivalTraffic,BOSS_CAR_LENGTH} from './boss-traffic.mjs';
 export const FIXED_STEP=1/60;
 export function createSession(contract,vehicle,parts){
  vehicle=configuredVehicle(vehicle,parts.body);
  const run={s:0,x:-3.4,speed:0,lateral:0,steering:0,elapsed:0,cargo:100,health:parts.health,initialHealth:parts.health,fuel:100,slip:0,boost:0,boostCooldown:0,trailerYaw:0};
- const traffic=contract.race?[]:Array.from({length:16},(_,i)=>({s:125+i*170,speed:i%3===0?-13:10+i%4*1.2,cruise:i%3===0?13:10+i%4*1.2,direction:i%3===0?-1:1,x:i%3===0?3.4:-3.4,cooldown:0}));
- return {contract,vehicle,parts:{...parts},run,traffic,rival:contract.race?{s:0,speed:0,x:3.4,length:VEHICLES.find(v=>v.id===rivalProfile(contract).vehicleId).length}:null,status:entryCheck(contract,vehicle,parts).ok?'running':'failed',reason:entryCheck(contract,vehicle,parts).reason||null,events:[],hitCooldown:0,accumulator:0,hits:0,boosts:0,result:null};
+ const traffic=contract.race?createBossTraffic(contract):Array.from({length:16},(_,i)=>({s:125+i*170,speed:i%3===0?-13:10+i%4*1.2,cruise:i%3===0?13:10+i%4*1.2,direction:i%3===0?-1:1,x:i%3===0?3.4:-3.4,cooldown:0}));
+ return {contract,vehicle,parts:{...parts},run,traffic,rival:contract.race?{s:0,speed:0,x:3.4,length:VEHICLES.find(v=>v.id===rivalProfile(contract).vehicleId).length,laneTarget:3.4,hitCooldown:0,hits:0}:null,status:entryCheck(contract,vehicle,parts).ok?'running':'failed',reason:entryCheck(contract,vehicle,parts).reason||null,events:[],hitCooldown:0,accumulator:0,hits:0,boosts:0,result:null};
 }
 function failure(run,contract){
  if(run.health<=0)return 'O caminhão precisa de reparos. Seu Nilo mandou o resgate.';
@@ -29,16 +30,31 @@ export function stepSession(session,input,dt=FIXED_STEP){
  session.hitCooldown=Math.max(0,session.hitCooldown-step);
  if(run.boost>0)run.boost=Math.max(0,run.boost-step);
  const snapshot=traffic.map(car=>({...car}));
+ const carPrevious=traffic.map(car=>({s:car.s,x:car.x}));
  for(let i=0;i<traffic.length;i++){
   const car=traffic[i],before={s:car.s,x:car.x};car.speed+=clamp(trafficSpeed(snapshot[i],snapshot,route)-car.speed,-4*step,1.8*step);car.s+=car.speed*step;car.cooldown=Math.max(0,car.cooldown-step);
   let recycled=false;if(car.s<run.s-100){car.s=run.s+700+i*65;recycled=true;}
-  if(!recycled&&car.cooldown===0&&session.hitCooldown===0&&sweptOverlap(previous,run,before,car,(vehicle.length+3.8)/2,2.05)){
-   const severity=clamp(Math.abs(run.speed-car.speed)/3,2,14);run.speed*=.34;run.health=Math.max(0,run.health-severity);run.cargo=Math.max(0,run.cargo-severity*contract.fragile);car.cooldown=3;session.hitCooldown=1.5;session.hits++;session.events.push({type:'collision'});
+  if(!recycled&&car.cooldown===0&&session.hitCooldown===0&&sweptOverlap(previous,run,before,car,(vehicle.length+BOSS_CAR_LENGTH)/2,2.05)){
+   const severity=clamp(Math.abs(run.speed-car.speed)/3,2,14);run.speed*=contract.race?.58:.34;run.health=Math.max(0,run.health-severity);run.cargo=Math.max(0,run.cargo-severity*contract.fragile);car.cooldown=3;session.hitCooldown=1.5;session.hits++;session.events.push({type:contract.race?'boss-traffic-player':'collision'});
   }
  }
  if(rival){
-  const curve=Math.abs(roadCurvature(rival.s+35,route)),profile=rivalProfile(contract),target=Math.min(profile.max/3.6,Math.sqrt(profile.grip/Math.max(.0001,curve)));
-  rival.speed+=clamp(target-rival.speed,-4*step,profile.accel*step);rival.s+=rival.speed*step;
+  const curve=Math.abs(roadCurvature(rival.s+35,route)),profile=rivalProfile(contract),baseTarget=Math.min(profile.max/3.6,Math.sqrt(profile.grip/Math.max(.0001,curve)));
+  rival.hitCooldown=Math.max(0,(rival.hitCooldown||0)-step);
+  for(const car of traffic)car.rivalCooldown=Math.max(0,(car.rivalCooldown||0)-step);
+  const plan=planRivalTraffic(rival,run,traffic,baseTarget);
+  rival.laneTarget=plan.desired;
+  rival.x+=clamp(rival.laneTarget-rival.x,-3.8*step,3.8*step);
+  rival.speed+=clamp(plan.targetSpeed-rival.speed,-4*step,profile.accel*step);rival.s+=rival.speed*step;
+  for(let i=0;i<traffic.length;i++){
+   const car=traffic[i];
+   if(rival.hitCooldown>0||car.rivalCooldown>0)continue;
+   if(sweptOverlap(rivalPrevious,rival,carPrevious[i],car,(rival.length+BOSS_CAR_LENGTH)/2,2.05)){
+    const severity=clamp(Math.abs(rival.speed-car.speed)/3,2,14);
+    rival.speed=Math.max(0,rival.speed*.54);rival.hitCooldown=1.7;car.rivalCooldown=2.5;rival.hits++;
+    session.events.push({type:'boss-traffic-rival',severity,carId:car.id});
+   }
+  }
   if(session.hitCooldown===0&&sweptOverlap(previous,run,rivalPrevious,rival,(vehicle.length+rival.length)/2,2.3)){
    run.speed*=.55;rival.speed*=.72;run.health=Math.max(0,run.health-5);session.hitCooldown=2;session.hits++;session.events.push({type:'collision'});
   }

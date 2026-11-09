@@ -46,3 +46,7 @@ A v0.14 passou em 93 testes e no build. A compilação foi aberta no navegador t
 ## v0.16
 
 Modo offline após primeira visita online, manifest PWA, ícone SVG e atualizações do service worker. O GitHub Pages usa a versão compilada e mantém os saves existentes.
+
+## v0.25 — Tráfego nas provas contra chefes
+
+Os seis duelos agora têm carros de apoio na pista nas duas faixas, visíveis no minimapa. Os obstáculos afetam tanto o jogador quanto o rival; ele desvia ou freia e perde velocidade se bater. Saves e fretes comuns preservados. Consulte `docs/REV25_TRAFEGO_CHEFES.md`.
