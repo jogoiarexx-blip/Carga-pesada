@@ -4,7 +4,7 @@
 
 Jogo original de caminhões em Santa Brava, com garagem 3D sobre cenário 2D, 30 missões, seis modelos, quatro carrocerias, duelos, dia/noite fixos e personalização com pinturas e 48 versões de peças compráveis.
 
-Esta versão migra o projeto para Vite 8.3.6, conserva a simulação e as correções da v0.13 e acrescenta medalhas de frete, recordes visíveis e backup transferível da carreira com as pinturas importadas. O Three.js r170 permanece local, com licença incluída; não é necessário um serviço externo para executar o jogo.
+Esta versão migra o projeto para Vite 8.3.6, conserva a simulação e as correções da v0.13 e acrescenta medalhas de frete, recordes visíveis e backup transferível da carreira com as pinturas importadas. O Three.js r170 permanece local, com licença incluída; no repositório é armazenado comprimido em `vendor/three.module.js.gz` e restaurado automaticamente pelo pretest/prebuild/predev. Não é necessário um serviço externo para executar o jogo.
 
 ## Desenvolvimento
 
@@ -28,12 +28,12 @@ npm run preview
 - `tests/`: simulação, campanha econômica, veículos, peças, backup e medalhas.
 - `scripts/check-dist.mjs`: integridade e caminhos relativos do build.
 - `dist/`: saída gerada; não editar nem versionar.
-- `.github/workflows/pages.yml`: testes, build e publicação no GitHub Pages.
+- `../.github/workflows/source-ci.yml`: CI real do repositório. A pasta interna `.github/workflows/pages.yml` é apenas referência histórica.
 - `docs/`: GDD, relatórios e evidências históricas.
 
 ## Publicação
 
-Siga [PUBLICAR_GITHUB_PAGES.md](PUBLICAR_GITHUB_PAGES.md). O fonte usa GitHub Actions; o ZIP compilado permite publicação estática direta. Nenhuma publicação no seu GitHub foi executada por este pacote.
+Siga [PUBLICAR_GITHUB_PAGES.md](PUBLICAR_GITHUB_PAGES.md). O código-fonte está integrado à pasta `source/` do GitHub. O CI gera e testa `dist/` automaticamente, sem alterar os arquivos publicados na raiz. Para publicar um novo jogo, aprovar o build e substituir o conteúdo compilado na raiz ou configurar a origem GitHub Pages como GitHub Actions.
 
 ## Carreira e desempenho
 
