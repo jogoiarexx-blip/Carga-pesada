@@ -1,0 +1,14 @@
+CARGA PESADA — CRÉDITOS DOS EFEITOS SONOROS
+
+Os efeitos a seguir foram adaptados do conjunto AltSFX para OpenTTD, versão 12, criado por ALEXbr / ALEX11BR e disponibilizado sob Creative Commons Atribuição 3.0 (CC BY 3.0). Alterações: conversão para Ogg Vorbis, redução para mono e 22.050 Hz e reprodução em velocidade variável para o motor.
+Conjunto: https://github.com/ALEX11BR/AltSFX
+Créditos originais: https://github.com/ALEX11BR/AltSFX/blob/master/readme.txt
+Licença CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+
+motor.ogg — adaptado de src/wav/25.wav, que usa “Truck engine”, de Joseph SARDIN / BigSoundBank (CC0).
+https://bigsoundbank.com/truck-engine-s1145.html
+buzina.ogg — adaptado de src/wav/35.wav, que usa “Air Horn Sound”, de Mike Koenig / SoundBible (CC BY 3.0).
+https://soundbible.com/1542-Air-Horn.html
+colisao.ogg — adaptado de src/wav/17.wav, que usa “crash”, de sagetyrtle / Freesound (CC0).
+
+Os nomes e licenças dos sons originais são os informados pelo autor do conjunto AltSFX. A atribuição ao conjunto e ao autor do som da buzina acompanha a distribuição do jogo.

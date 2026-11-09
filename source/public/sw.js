@@ -1,9 +1,10 @@
 /* Carga Pesada v0.24 - recursos do jogo disponíveis offline após o primeiro acesso. */
-const CACHE='carga-pesada-offline-v0.24-artes-v2';
+const CACHE='carga-pesada-offline-v0.24-audio-v1';
 const PREFIX='carga-pesada-offline-';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./icons/carga-pesada.svg',
   './assets/oficina-farol-v06.png',
+  ...['motor','buzina','colisao'].map(name=>'./assets/audio/'+name+'.ogg'),
   ...['aguia','lobo-v2','onca','arara-v2'].map(name=>'./assets/artes/'+name+'.webp'),
   ...['ipes','porto','vale','circuito'].flatMap(region=>['dia','noite'].map(time=>'./assets/fundo-'+region+'-'+time+'.svg'))
 ];

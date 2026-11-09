@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {RecordedSounds} from '../src/recorded-sounds.mjs';
+class FakeAudio {constructor(url){this.src=url;this.paused=true;this.currentTime=0;}play(){this.paused=false;this.played=(this.played||0)+1;return Promise.resolve()}pause(){this.paused=true;}}
+test('motor gravado varia com a velocidade e pausa sem tocar fora da viagem',()=>{const s=new RecordedSounds(FakeAudio,'https://example.test/game/');s.setVolume(.5);s.start();s.update(0);assert.equal(s.engine.loop,true);assert.equal(s.engine.paused,false);const idle=s.engine.playbackRate;s.update(30);assert.ok(s.engine.playbackRate>idle);s.stop();assert.equal(s.engine.paused,true)});
+test('efeitos gravados respeitam volume e não falham quando áudio é bloqueado',()=>{const s=new RecordedSounds(FakeAudio,'https://example.test/game/');s.setVolume(0);s.start();assert.equal(s.engine.volume,0);s.horn();s.crash(10);s.crash(10.1);assert.equal(s.hornSound.played,1);assert.equal(s.crashSound.played,1);s.crash(11);assert.equal(s.crashSound.played,2);});
