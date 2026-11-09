@@ -17,7 +17,8 @@ jobs:
         with:
           node-version: '22'
       - name: Conferir JavaScript compilado
-        run: node --check assets/index-DHdQ5Cn1.js
+        run: |
+          node -e 'const fs=require("fs"),cp=require("child_process"),h=fs.readFileSync("index.html","utf8"),m=h.match(/\.\/assets\/index-[\w-]+\.js/);if(!m)throw Error("JavaScript compilado não encontrado");cp.execFileSync(process.execPath,["--check",m[0]],{stdio:"inherit"});'
       - name: Conferir service worker
         run: node --check sw.js
       - name: Testar integridade do GitHub Pages

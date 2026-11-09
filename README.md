@@ -4,7 +4,7 @@ Jogo de caminhões, fretes, oficina, duelos e história em JavaScript, Three.js 
 
 **Jogar agora:** https://jogoiarexx-blip.github.io/Carga-pesada/
 
-## Versão publicada — v0.21
+## Versão publicada — v0.24
 
 Menu principal completamente remodelado e **funcional**, seguindo a referência visual fornecida:
 - cinco botões laterais: Continuar, Contratos, Garagem, Opções e Extras;
@@ -36,7 +36,7 @@ npm run check:dist
 
 30 missões, seis caminhões, personalização de acessórios/carrocerias, duelos, economia, medalhas, músicas próprias, controles de teclado, touch e gamepad, backup/restauração de save.
 
-**QA:** 102 testes de código-fonte e build Vite aprovados. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
+**QA:** testes de código-fonte e build Vite aprovados para a v0.24. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
 
 ## v0.21 — Rochedo 160 realista
 
@@ -47,3 +47,9 @@ Cabine alta exclusiva, grade de radiador em profundidade, novos faróis, vidros,
 O caminhão de capô longo ganhou cabine, faróis redondos, grade cromada, dormitório alto, escapamentos independentes, rodas e chassi mais realistas. Mantidos saves e as opções de carreta-baú e carreta com lona. O [relatório da REV22](source/docs/REV22_PEREGRINO_CLASSICO.md) e a implementação estão em `source/`.
 
 A atualização possui nove novos testes específicos do Peregrino, totalizando 127 testes de código-fonte.
+
+## v0.24 — Imperador Frontal realista
+
+Cabine alta e avançada sobre o motor, com para-brisa dividido, faróis duplos, grade cromada profunda, teto com defletor, portas, estribos, retrovisores, para-lamas, rodas e chassi remodelados. Mantém os cinco eixos do conjunto articulado, baú e lona, pintura, acessórios, saves e as novas artes brasileiras.
+
+O módulo dedicado está em [source/src/imperador-frontal.mjs](source/src/imperador-frontal.mjs), com [relatório](source/docs/REV24_IMPERADOR_FRONTAL_REALISTA.md) e [testes](source/tests/imperador-frontal.test.mjs). A suíte local passou 144 testes; a validação automatizada do GitHub Actions compilou também as artes atuais do projeto.
