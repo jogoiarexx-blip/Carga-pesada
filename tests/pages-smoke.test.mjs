@@ -7,8 +7,9 @@ const text=file=>readFileSync(join(root,file),'utf8');
 const html=text('index.html'),sw=text('sw.js'),manifest=JSON.parse(text('manifest.webmanifest'));
 const scripts=[...html.matchAll(/(?:src|href)="([^"#]+)"/g)].map(m=>m[1]).filter(s=>s.startsWith('./'));
 const entry=scripts.find(s=>/\.\/assets\/index-[\w-]+\.js/.test(s));
+const version=html.match(/class="build">v(0\.\d+)/)?.[1];
 test('publicação tem versão, novo menu e arquivos essenciais',()=>{
- const version=html.match(/class="build">v(0\.\d+)/)?.[1];assert.ok(version,'versão ausente');assert.ok(Number(version.split('.')[1])>=18);
+ assert.ok(version,'versão ausente');assert.ok(Number(version.split('.')[1])>=18);
  assert.match(html,/class="cp-home-layout"/);
  assert.match(html,/class="cp-main-actions"/);
  assert.match(html,/id="menuPanel"/);
