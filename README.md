@@ -1,25 +1,22 @@
 # Carga Pesada — Santa Brava
 
-Jogo original de caminhões, fretes, oficina, duelos e história em Santa Brava, construído com JavaScript, Three.js e Vite.
+Jogo de caminhões, fretes, oficina, duelos e história em JavaScript, Three.js e Vite.
 
-**Jogar:** https://jogoiarexx-blip.github.io/Carga-pesada/
+**Jogar agora:** https://jogoiarexx-blip.github.io/Carga-pesada/
 
-## Versões
+## Versão publicada — v0.18
 
-- **v0.16 — jogo publicado (09/11/2026):** suporte offline progressivo, PWA, três opções gráficas, minimapa e velocímetro otimizados.
-- **REV17 — manutenção e fonte integrado (09/11/2026):** código-fonte Vite versionado em [source/](source/), 97 testes e build Vite executados com sucesso no [GitHub Actions](https://github.com/jogoiarexx-blip/Carga-pesada/actions/runs/42620474020).
+Menu principal completamente remodelado e **funcional**, seguindo a referência visual fornecida:
+- cinco botões laterais: Continuar, Contratos, Garagem, Opções e Extras;
+- Perfil, Estatísticas e Conquistas exibem dados reais da carreira;
+- cenografia da Oficina Farol e caminhão tridimensional ativo no menu;
+- cartões inferiores clicáveis com campanha, frota e rádio;
+- responsivo para computador e celular;
+- mantém os 30 contratos, a oficina, opções gráficas, áudio, PWA offline e a chave de save `carga-pesada-v1`.
 
-## Onde editar
+## Código-fonte
 
-- [source/src/](source/src/): motor do jogo, caminhões, cenários, IA, HUD, garagem, efeitos e CSS.
-- [source/tests/](source/tests/): testes da campanha, física, sessões, veículos, upgrades, save e progressão.
-- [source/public/](source/public/): imagens, cenários e PWA.
-- [source/package.json](source/package.json) e [source/package-lock.json](source/package-lock.json): ferramentas e dependências fixadas.
-- [source/LEIA-ME_FONTE_GITHUB.md](source/LEIA-ME_FONTE_GITHUB.md): instruções de desenvolvimento e arquivo Three.js local.
-
-## Como trabalhar no fonte
-
-Use **Node.js 22.12 ou superior**:
+Os arquivos editáveis estão em [source/](source/) e a documentação da implementação em [source/docs/REV18_MENU_FUNCIONAL.md](source/docs/REV18_MENU_FUNCIONAL.md). A raiz `index.html` e `assets/` contém o jogo compilado e publicado.
 
 ```bash
 cd source
@@ -29,16 +26,14 @@ npm run build
 npm run check:dist
 ```
 
-O `pretest`/`prebuild` restaura e verifica o arquivo Three.js de um arquivo compactado existente no próprio repositório. O workflow [source-ci.yml](.github/workflows/source-ci.yml) valida a fonte automaticamente e disponibiliza `dist` como artefato.
+## Publicação automatizada
 
-## Publicação segura
+- [source-ci.yml](.github/workflows/source-ci.yml): valida os módulos e gera artefato compilado.
+- [publish-vite.yml](.github/workflows/publish-vite.yml): executa testes, compila com Vite e copia `source/dist/` para a raiz da `main`, preservando os arquivos de configuração e código-fonte.
+- [verify-pages.yml](.github/workflows/verify-pages.yml): verifica a integridade dos recursos publicados.
 
-A versão disponível no GitHub Pages ainda é servida a partir do **`index.html` e `assets/` na raiz**. A integração do fonte não substitui automaticamente o jogo em produção. Uma nova versão jogável deve passar nos testes, ser compilada com Vite e ter seu `dist/` publicado na raiz ou por um workflow Pages configurado para Actions.
+## Conteúdo da carreira
 
-**Salvamentos:** preservar a chave `carga-pesada-v1` e o formato de backup. Não apagar a pasta `assets/` da raiz até confirmar o novo build.
+30 missões, seis caminhões, personalização de acessórios/carrocerias, duelos, economia, medalhas, músicas próprias, controles de teclado, touch e gamepad, backup/restauração de save.
 
-## Conteúdo
-
-30 missões, seis modelos, carrocerias, acessórios compráveis, duelos, oficina, economia, medalhas, músicas originais, backup/restauração da carreira e controles para teclado, celular e gamepad.
-
-Ainda faltam certificação visual em celulares/WebGL, ensaios prolongados das missões e evolução das físicas e cenários.
+**QA:** 102 testes de código-fonte e build Vite aprovados. A auditoria visual em diferentes navegadores, resoluções de celular e partidas completas permanece como etapa adicional.
