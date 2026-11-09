@@ -5,6 +5,7 @@ import {configuredVehicle,vehicleLayout} from './fleet.mjs';
 import {buildAuroraCab,detailAuroraChassis} from './aurora-90.mjs';
 import {buildEstradeiroCab,detailEstradeiroChassis} from './estradeiro-120.mjs';
 import {buildRochedoCab,detailRochedoAxles} from './rochedo-160.mjs';
+import {buildPeregrinoCab,detailPeregrinoChassis} from './peregrino-classico.mjs';
 const material=(color,metalness=0)=>new THREE.MeshStandardMaterial({color,metalness,roughness:metalness?.38:.82,flatShading:true});
 export function buildTruck(vehicle,color,bodyId){
  const v=configuredVehicle(vehicle,bodyId),layout=vehicleLayout(v),root=new THREE.Group();root.name=v.name;
@@ -26,14 +27,8 @@ export function buildTruck(vehicle,color,bodyId){
   buildEstradeiroCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
  }else if(v.id==='rochedo'){
   buildRochedoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
- }else if(v.cab==='classic'){const factoryExhaust=new THREE.Group();factoryExhaust.userData.dynamic=true;cab.add(factoryExhaust);root.userData.factoryExhaust=factoryExhaust;
-  profile(cab,[[.1,1.05],[.1,2.2],[2.15,2.48],[2.15,1.05]],2.05,paint,'capô clássico');
-  profile(cab,[[2,1.15],[2.05,3.25],[2.5,3.65],[3.85,3.65],[3.85,1.15]],cabWidth,paint,'cabine clássica');
-  profile(cab,[[3.4,1.15],[3.4,4.05],[4.05,4.4],[5.4,4.4],[5.4,1.15]],2.5,paint,'dormitório');
-  profile(cab,[[2.16,2.45],[2.38,3.2],[3.22,3.2],[3.22,2.45]],2.48,black);profile(cab,[[2.26,2.55],[2.45,3.1],[3.1,3.1],[3.1,2.55]],2.5,glass);
-  box(cab,2.03,1.27,.1,chrome,0,1.75,.04,'grade cromada');for(let i=-5;i<=5;i++)box(cab,.065,1.1,.13,black,i*.16,1.75,-.025);
-  box(cab,2.23,.67,.08,glass,0,2.97,2.03);box(cab,2.5,.15,.55,black,0,3.43,2.22,'viseira');
-  for(const side of [-1,1]){box(cab,.08,.58,1.1,black,side*1.26,3.78,4.2);box(cab,.09,.42,.88,glass,side*1.28,3.78,4.2);const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,3.6,8),chrome);pipe.position.set(side*1.37,2.75,3.42);factoryExhaust.add(pipe);box(cab,.5,.17,.2,lamp,side*.87,1.47,-.04);box(cab,.2,.1,.16,orange,side*1.05,2.28,.2);}
+ }else if(v.id==='peregrino'){
+  root.userData.factoryExhaust=buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange});
  }else if(v.cab==='aero'){
   profile(cab,[[.1,1.05],[.12,1.92],[1.08,2.4],[2.3,2.65],[2.3,1.05]],2.25,paint,'capô aerodinâmico');
   profile(cab,[[2.05,1.15],[2.05,3.1],[2.7,3.9],[3.9,4.52],[5.7,4.52],[5.7,1.15]],2.48,paint,'cabine e teto aerodinâmico');
@@ -53,14 +48,14 @@ export function buildTruck(vehicle,color,bodyId){
 
  // Small details share the existing material batches.
  const windY=v.cab==='rigid'?2.03:v.cab==='frontal'?3.06:2.98,windZ=v.cab==='classic'||v.cab==='aero'?1.975:-.005;
- if(v.id!=='rochedo')for(const side of [-1,1])rod(cab,new THREE.Vector3(side*.6,windY-.23,windZ),new THREE.Vector3(side*.17,windY+.12,windZ),.016,black);
+ if(v.id!=='rochedo'&&v.id!=='peregrino')for(const side of [-1,1])rod(cab,new THREE.Vector3(side*.6,windY-.23,windZ),new THREE.Vector3(side*.17,windY+.12,windZ),.016,black);
  // Shared details: mirrors, doors, tanks, steps, lights and bumper.
- for(const side of [-1,1]){if(v.id!=='rochedo'){const mirrorZ=v.cab==='classic'?2.35:v.cab==='aero'?2.5:.66,mirrorY=v.cab==='rigid'?2.45:3;
+ for(const side of [-1,1]){if(v.id!=='rochedo'&&v.id!=='peregrino'){const mirrorZ=v.cab==='classic'?2.35:v.cab==='aero'?2.5:.66,mirrorY=v.cab==='rigid'?2.45:3;
   rod(cab,new THREE.Vector3(side*1.15,mirrorY,mirrorZ),new THREE.Vector3(side*1.6,mirrorY,mirrorZ-.14),.045,black);box(cab,.17,.5,.3,black,side*1.61,mirrorY,mirrorZ-.14,'retrovisor');box(cab,.02,.4,.22,chrome,side*1.71,mirrorY,mirrorZ-.14);
   const stepZ=v.cab==='classic'?2.95:v.cab==='aero'?3.05:1.9;box(cab,.46,.15,1.05,chrome,side*1.25,.97,stepZ,'degrau');box(cab,.36,.12,.9,chrome,side*1.15,1.21,stepZ);}
   box(root,.5,.67,v.category==='tractor'?1.55:1.2,chrome,side*1.03,.98,layout.front+(v.category==='tractor'?5.6:3.45),'tanque');
  }
- if(v.id!=='rochedo')box(cab,2.62,.26,.26,v.cab==='aero'?paint:chrome,0,.89,.02,'para-choque');for(let i=-2;i<=2;i++)if(v.id!=='rochedo')box(cab,.12,.08,.14,orange,i*.38,v.cab==='rigid'?3.12:v.cab==='classic'?3.75:4.18,v.cab==='classic'?2.55:v.cab==='aero'?3.8:1.1);
+ if(v.id!=='rochedo'&&v.id!=='peregrino')box(cab,2.62,.26,.26,v.cab==='aero'?paint:chrome,0,.89,.02,'para-choque');for(let i=-2;i<=2;i++)if(v.id!=='rochedo'&&v.id!=='peregrino')box(cab,.12,.08,.14,orange,i*.38,v.cab==='rigid'?3.12:v.cab==='classic'?3.75:4.18,v.cab==='classic'?2.55:v.cab==='aero'?3.8:1.1);
  axle(root,layout.frontAxle,true,heavy);for(const z of layout.driveAxles)axle(root,z,false,heavy);
  let bodyParent=root,offset=0;
  if(v.category==='tractor'){
@@ -92,10 +87,10 @@ export function buildTruck(vehicle,color,bodyId){
   for(let i=0;i<3;i++)box(bodyParent,.15,.12,.04,[red,orange,white][i],side*.95+(i-1)*.17,1.1,bodyEnd+.195,'lentes da lanterna');
   box(bodyParent,.65,.045,.05,black,side*.75,.58,bodyEnd+.22,'apoio do para-choque');
   const frontZ=v.cab==='classic'||v.cab==='aero'?.01:-.01;
-  if(v.id!=='rochedo'){box(cab,.46,.25,.06,black,side*.88,1.18,frontZ,'moldura dos faróis');box(cab,.34,.14,.055,lamp,side*.88,1.18,frontZ-.06,'lente dos faróis');}
+  if(v.id!=='rochedo'&&v.id!=='peregrino'){box(cab,.46,.25,.06,black,side*.88,1.18,frontZ,'moldura dos faróis');box(cab,.34,.14,.055,lamp,side*.88,1.18,frontZ-.06,'lente dos faróis');}
   for(const z of layout.driveAxles)box(root,.13,.12,.48,black,side*1.23,1.28,z,'coroa do para-lama');
  }
- if(v.id!=='rochedo')for(const side of [-1,1]){const doorZ=v.cab==='classic'?3.2:v.cab==='aero'?3.38:2.05;box(cab,.025,.75,.035,black,side*(cabWidth/2+.04),1.72,doorZ,'junta da porta');box(cab,.035,.065,.27,chrome,side*(cabWidth/2+.055),2.04,doorZ-.28,'maçaneta');}
+ if(v.id!=='rochedo'&&v.id!=='peregrino')for(const side of [-1,1]){const doorZ=v.cab==='classic'?3.2:v.cab==='aero'?3.38:2.05;box(cab,.025,.75,.035,black,side*(cabWidth/2+.04),1.72,doorZ,'junta da porta');box(cab,.035,.065,.27,chrome,side*(cabWidth/2+.055),2.04,doorZ-.28,'maçaneta');}
  for(let z=bodyStart+.5;z<bodyEnd;z+=1.2)box(bodyParent,2.26,.08,.08,black,0,1.31,z,'travessa do piso');
  for(const side of [-1,1]){box(bodyParent,.48,.16,.15,red,side*.95,1.1,bodyEnd+.1,'lanterna traseira');for(let z=bodyStart+.5;z<bodyEnd;z+=2)box(bodyParent,.07,.09,.18,orange,side*1.29,base+.12,z);}
  for(let i=0;i<8;i++)box(bodyParent,.23,.08,.035,i%2?red:white,-.84+i*.24,1.3,bodyEnd+.21,'faixa refletiva traseira');
@@ -103,6 +98,7 @@ export function buildTruck(vehicle,color,bodyId){
  if(v.id==='aurora')detailAuroraChassis({root,cab,wheels,layout,box});
  if(v.id==='estradeiro')detailEstradeiroChassis({root,wheels,layout,box});
  if(v.id==='rochedo')detailRochedoAxles({root,wheels,layout,box});
+ if(v.id==='peregrino')detailPeregrinoChassis({root,wheels,layout,box});
  root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
 }
 export function animateTruck(model,steering,speed,dt,trailerYaw=0){for(const wheel of model.userData.wheels)wheel.rotation.x-=speed*Math.max(0,dt)/(wheel.userData.radius||model.userData.wheelRadius||.64);for(const pivot of model.userData.frontWheels)pivot.rotation.y=-steering;if(model.userData.trailer)model.userData.trailer.rotation.y=trailerYaw;}

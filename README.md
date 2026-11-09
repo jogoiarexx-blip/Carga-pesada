@@ -41,3 +41,9 @@ npm run check:dist
 ## v0.21 — Rochedo 160 realista
 
 Cabine alta exclusiva, grade de radiador em profundidade, novos faróis, vidros, espelhos, estribos duplos, para-lamas e detalhamento dos **quatro eixos**. Código em [source/src/rochedo-160.mjs](source/src/rochedo-160.mjs) e [relatório de testes](source/docs/REV21_ROCHEDO_160_REALISTA.md). O save `carga-pesada-v1` continua compatível. A versão é compilada e publicada automaticamente pelo workflow Vite.
+
+## v0.22 — Peregrino Clássico
+
+O caminhão de capô longo ganhou cabine, faróis redondos, grade cromada, dormitório alto, escapamentos independentes, rodas e chassi mais realistas. Mantidos saves e as opções de carreta-baú e carreta com lona. O [relatório da REV22](source/docs/REV22_PEREGRINO_CLASSICO.md) e a implementação estão em `source/`.
+
+A atualização possui nove novos testes específicos do Peregrino, totalizando 127 testes de código-fonte.
