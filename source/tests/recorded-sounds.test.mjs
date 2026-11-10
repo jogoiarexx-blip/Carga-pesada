@@ -13,8 +13,8 @@ test('partida gravada acontece uma vez; pausa e retorno não religam o caminhão
  s.start();s.start();
  assert.equal(s.engine.loop,false,'som de partida não pode repetir automaticamente');
  assert.equal(s.engine.played,1);
- s.update(0);assert.equal(s.engine.playbackRate,.82);
- s.update(30);assert.ok(s.engine.playbackRate>.82);
+ s.update(0);assert.equal(s.engine.playbackRate,1,'partida deve tocar na velocidade original');
+ s.update(30);assert.equal(s.engine.playbackRate,1,'acelerar não pode acelerar a gravação de partida');
  s.pause();const previousTime=2.3;s.engine.currentTime=previousTime;
  s.start();assert.equal(s.engine.played,2);assert.equal(s.engine.currentTime,previousTime);
  s.engine.finish();s.start();assert.equal(s.engine.played,2,'não repetir partida após término');
@@ -68,6 +68,7 @@ test('loop gravado só inicia após a partida e para durante a pausa',async()=>{
  s.engine.finish();assert.equal(state.nodes.length,1);
  assert.equal(state.nodes[0].loop,true);
  s.update(45);assert.ok(state.nodes[0].playbackRate.value>1);
+  assert.equal(s.engine.playbackRate,1,'a rotação varia apenas no loop de rodagem');
  s.pause();assert.equal(state.nodes[0].stopped,1);
  s.start();assert.equal(state.nodes.length,2,'retomada só restaura motor contínuo');
  assert.equal(s.engine.played,1,'retomada não repete partida');

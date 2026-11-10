@@ -32,7 +32,7 @@ export class RecordedSounds {
   this.hornSound=new AudioClass(new URL('assets/audio/buzina.ogg',base).href);
   this.crashSound=new AudioClass(new URL('assets/audio/colisao.ogg',base).href);
   // motor.ogg contém a PARTIDA. Nunca reproduzir esse arquivo inteiro em loop.
-  this.engine.loop=false;this.engine.preload='auto';this.engine.preservesPitch=false;
+  this.engine.loop=false;this.engine.preload='auto';this.engine.playbackRate=1;
   this.engine.onended=()=>{if(this.running)this.startIdle();};
   this.hornSound.preload=this.crashSound.preload='auto';
   this.running=false;this.startedThisTrip=false;this.idleNode=null;this.idleBuffer=null;
@@ -94,7 +94,8 @@ export class RecordedSounds {
  stop(){this.pause();this.startedThisTrip=false;this.engine.currentTime=0;}
  update(speed){
   this.speedRate=clamp(.82+Math.abs(speed)/75,.82,1.45);
-  this.engine.playbackRate=this.speedRate;
+  // A gravação de PARTIDA toca em tempo real. Apenas a rodagem contínua muda de rotação.
+  this.engine.playbackRate=1;
   if(this.idleNode)this.idleNode.playbackRate.value=this.speedRate;
  }
  horn(){this.play(this.hornSound);}

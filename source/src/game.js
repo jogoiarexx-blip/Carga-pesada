@@ -32,7 +32,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.27';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.28';}
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);}
 applyGraphicsQuality();renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;

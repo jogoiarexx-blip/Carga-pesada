@@ -57,6 +57,14 @@ jobs:
           test -f source/dist/sw.js
           test -d source/dist/assets
           rsync -a source/dist/ ./
+          # Esvaziar apenas bundles Vite antigos. Artes e áudio permanecem intocados.
+          # Assets antigos causavam execução de JS desatualizado e erros como
+          # "introShownThisSession is not defined" após atualizações do Pages.
+          for old in assets/index-*.js assets/index-*.css assets/three-*.js; do
+            if [[ -f "$old" && ! -f "source/dist/$old" ]]; then
+              rm -f "$old"
+            fi
+          done
           cmp source/dist/index.html index.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -65,7 +73,7 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Nenhuma mudança na build publicada."
           else
-            git commit -m "build: publicar menu principal REV18 compilado"
+            git commit -m "build: publicar Carga Pesada atualizado sem bundles obsoletos"
             git push origin HEAD:main
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi

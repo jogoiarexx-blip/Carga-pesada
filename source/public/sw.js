@@ -1,5 +1,5 @@
-/* Carga Pesada v0.27 - recursos do jogo disponíveis offline após o primeiro acesso. */
-const CACHE='carga-pesada-offline-v0.27-audio-v2';
+/* Carga Pesada v0.28 - recursos do jogo disponíveis offline após o primeiro acesso. */
+const CACHE='carga-pesada-offline-v0.28-audio-v3';
 const PREFIX='carga-pesada-offline-';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./icons/carga-pesada.svg',
@@ -41,11 +41,12 @@ self.addEventListener('fetch',event=>{
     }).catch(async()=>await caches.match(scoped('./index.html'))||Response.error()));
     return;
   }
-  event.respondWith(caches.match(request,{ignoreSearch:true}).then(cached=>cached||fetch(request).then(response=>{
-    if(response.ok&&response.type==='basic'){
-      const copy=response.clone();
-      event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,copy)));
-    }
+  // Nunca ler a resposta de outro cache antigo, mesmo antes da limpeza do activate.
+  event.respondWith(caches.open(CACHE).then(async cache=>{
+    const cached=await cache.match(request,{ignoreSearch:true});
+    if(cached)return cached;
+    const response=await fetch(request);
+    if(response.ok&&response.type==='basic')event.waitUntil(cache.put(request,response.clone()));
     return response;
-  })));
+  }));
 });
