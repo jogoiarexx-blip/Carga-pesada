@@ -36,7 +36,7 @@ test('novo zoom adaptativo e efeitos respondem apenas às compras confirmadas',(
  assert.match(code,/if\(commitGarage\(draft=>repairTruck/);
  assert.match(code,/showWorkshopService\('repair'\)/);
  assert.match(html,/id="fitModel"/);
- assert.match(html,/id="previewZoom" type="range" min="14" max="70"/);
+ assert.match(html,/id="previewZoom" type="range" min="14" max="90"/);
 });
 
 test('status visual e foco da câmera seguem o serviço contextual',()=>{
@@ -53,4 +53,11 @@ test('visibilidade dos efeitos respeita o lado da câmera e interrompe giro auto
  assert.match(code,/beginWorkshopService\(workshopScene,kind,\{side\}\)/);
  assert.match(code,/previewSpin=false;\$\('spinModel'\)/);
  assert.match(css,/\.garage-stage \.stage-shadow\{display:none\}/);
+});
+
+test('enquadramento usa geometria real e retira paredes que escondem o caminhão',()=>{
+ assert.match(code,/new THREE\.Box3\(\)\.setFromObject\(player\)/);
+ assert.match(code,/workshopFitBounds\(garageModelBounds,w,h,angle\)/);
+ assert.match(code,/garageCameraFocus\.copy\(garageCameraBase\)/);
+ assert.match(code,/updateWorkshopCameraOcclusion\(workshopScene,camera\.position\)/);
 });

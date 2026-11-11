@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../src/vendor/three.module.js';
-import {createWorkshopScene,setWorkshopQuality,WORKSHOP_LIMITS,configureWorkshopVehicle,beginWorkshopService,updateWorkshopService} from '../src/workshop-scene.mjs';
+import {createWorkshopScene,setWorkshopQuality,WORKSHOP_LIMITS,configureWorkshopVehicle,beginWorkshopService,updateWorkshopService,updateWorkshopCameraOcclusion} from '../src/workshop-scene.mjs';
 import {VEHICLES} from '../src/fleet.mjs';
 
 test('Oficina Farol 3D contém galpão, bancada, luminárias e adereços low-poly',()=>{
@@ -140,4 +140,16 @@ test('iluminação de serviço permanece desligada em eco e não acumula luzes d
  assert.equal(scene.userData.serviceLight.visible,true);
  setWorkshopQuality(scene,'balanced');
  assert.equal(scene.userData.serviceLight.visible,false);
+});
+
+test('paredes desaparecem quando ficariam entre a câmera externa e o caminhão',()=>{
+ const s=createWorkshopScene();s.position.set(12,-3,-20);
+ const side=s.userData.sideWall,back=s.userData.backWall;
+ assert.ok(side.isInstancedMesh&&back.isInstancedMesh);
+ updateWorkshopCameraOcclusion(s,{x:-25,y:5,z:-20});
+ assert.equal(side.visible,false);assert.equal(back.visible,true);
+ updateWorkshopCameraOcclusion(s,{x:12,y:5,z:-80});
+ assert.equal(side.visible,true);assert.equal(back.visible,false);
+ updateWorkshopCameraOcclusion(s,{x:12,y:5,z:-20});
+ assert.equal(side.visible,true);assert.equal(back.visible,true);
 });

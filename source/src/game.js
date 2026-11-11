@@ -25,8 +25,8 @@ import {pageHash,pageFromHash} from './navigation.mjs';
 import {PRESETS,ACCESSORIES,normalizeDecoration,saveDecoration} from './decoration.mjs';
 import {decorateTruck,animateDecoration} from './truck-decoration.mjs';
 import {studioEnvironment,addContactShadow} from './truck-studio.mjs';
-import {createWorkshopScene,setWorkshopQuality,configureWorkshopVehicle,beginWorkshopService,stopWorkshopService,updateWorkshopService} from './workshop-scene.mjs';
-import {workshopCameraDistance} from './workshop-camera.mjs';
+import {createWorkshopScene,setWorkshopQuality,configureWorkshopVehicle,beginWorkshopService,stopWorkshopService,updateWorkshopService,updateWorkshopCameraOcclusion} from './workshop-scene.mjs';
+import {workshopCameraDistance,workshopFitBounds} from './workshop-camera.mjs';
 import {importArt} from './art-store.mjs';
 const $=id=>document.getElementById(id),money=n=>'CR$ '+Math.round(n).toLocaleString('pt-BR');
 let savedRaw=null;try{savedRaw=localStorage.getItem('carga-pesada-v1');}catch{}
@@ -35,7 +35,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.33';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.34';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -94,7 +94,8 @@ function replacePlayer(vehicleId=save.selected,bodyId){
  $('truckLabel').textContent=v.name.toUpperCase();$('truckSpecs').textContent=`${v.totalAxles} EIXOS · ${BODY_TYPES[v.body].name.toUpperCase()} · ${v.capacity} t`;
 }
 let decorationEpoch=0,draftDecoration=normalizeDecoration(),currentPage='home',garageTab='fleet',previewId=save.selected,previewBody=null,previewAngle=2.55,previewSpin=false,previewDistance=24,paintChoice=null;
-const garageCameraFocus=new THREE.Vector3(0,1.85,0);
+const garageCameraFocus=new THREE.Vector3(0,1.85,0),garageCameraBase=new THREE.Vector3(0,1.85,0);
+let garageModelBounds=null;
 function applyLighting(){document.body.dataset.night=night?'true':'false';hemi.intensity=night?1.0:2.3;sun.intensity=night?.4:3.1;renderer.night=night;environment.traverse(o=>{if(o.name==='route-sun')o.visible=!night;});if(mode==='drive'||mode==='paused'||mode==='result'){scene.background=skyImages[activeRoute.id+'-'+(night?'noite':'dia')]||new THREE.Color(activeRoute.sky);scene.fog.color.set(night?'#0a1c2d':activeRoute.sky);renderer.palette={sky:night?'#071624':activeRoute.sky,grass:night?'#253a31':activeRoute.grass};}}
 function menuStage(on){environment.visible=!on;configureWorkshopScene(on&&mode==='garage');scene.background=on?null:new THREE.Color(activeRoute.sky);applyLighting();}
 
@@ -114,9 +115,16 @@ function showroom(id=save.selected){garageTab='store';previewId=id;previewBody=s
 function updateGaragePreview(reset=false){
  const base=VEHICLES.find(v=>v.id===previewId);if(!base.bodyOptions.includes(previewBody))previewBody=save.fleet[previewId]?.body||base.defaultBody;
  if(reset){decorationEpoch++;draftDecoration=normalizeDecoration(save.fleet[previewId]?.decoration);}
- replacePlayer(previewId,previewBody);player.rotation.y=0;if(paintChoice)player.userData.paint.color.set(paintChoice);
+ replacePlayer(previewId,previewBody);player.rotation.y=0;
+ if(player.userData.trailer)player.userData.trailer.rotation.y=0;
+ player.updateMatrixWorld(true);
+ const worldBounds=new THREE.Box3().setFromObject(player);
+ garageModelBounds={min:worldBounds.min.toArray().map((v,i)=>v-player.position.getComponent(i)),
+  max:worldBounds.max.toArray().map((v,i)=>v-player.position.getComponent(i))};
+ garageCameraBase.fromArray(workshopFitBounds(garageModelBounds,800,600,previewAngle).center);
+ if(paintChoice)player.userData.paint.color.set(paintChoice);
  if(workshopScene)configureWorkshopVehicle(workshopScene,configuredVehicle(base,previewBody));
- if(reset){previewAngle=2.45;previewSpin=false;previewDistance=workshopAutoDistance(base);garageCameraFocus.set(0,1.85,0);}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
+ if(reset){previewAngle=2.45;previewSpin=false;previewDistance=workshopAutoDistance(base);garageCameraFocus.copy(garageCameraBase);}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
 }
 function vehicleIcon(v,color){const hood=v.cab==='classic'||v.cab==='aero',rear=v.category==='tractor'?94:88;return `<svg viewBox="0 0 120 50" aria-hidden="true"><path d="M2 41H117" stroke="#a6b294" opacity=".4"/><path d="${hood?'M5 33V24L20 22L25 12H43V35H5Z':'M6 35V15L12 10H33V35Z'}" fill="${color}" stroke="#ced2ab" stroke-width=".7"/><path d="${hood?'M24 22L28 15H38V23Z':'M11 16H27V24H11Z'}" fill="#142c28"/><path d="M${hood?45:36} 14H112V34H${hood?45:36}Z" fill="${v.defaultBody==='tarp_trailer'?'#bb853b':'#a4b5a3'}" stroke="#d4d6bc" stroke-width=".7"/><path d="M44 34H114V38H26V34" fill="#102a24"/><g fill="#10231e" stroke="#b9c2ac" stroke-width="1.2"><circle cx="17" cy="38" r="6"/><circle cx="${rear-5}" cy="38" r="6"/>${v.axles>2||v.category==='tractor'?`<circle cx="${rear+9}" cy="38" r="6"/>`:''}</g></svg>`;}
 function renderGarage(){
@@ -139,8 +147,8 @@ function commitGarage(action){
  refreshGarage();return true;
 }
 function workshopAutoDistance(vehicle,angle=previewAngle){
- const rect=$('garageStage').getBoundingClientRect();
- return workshopCameraDistance(vehicle,rect.width||800,rect.height||600,angle);
+ const rect=$('garageStage').getBoundingClientRect(),w=rect.width||800,h=rect.height||600;
+ return garageModelBounds?workshopFitBounds(garageModelBounds,w,h,angle).distance:workshopCameraDistance(vehicle,w,h,angle);
 }
 function fitWorkshopPreview(){
  const vehicle=VEHICLES.find(v=>v.id===previewId);
@@ -357,10 +365,11 @@ if(hudCanvasDue(clock,nextHudPaint)){drawSpeedometer($('speedometer'),Math.abs(r
   }
  const distance=isGarage?previewDistance:Math.max(17,player.userData.spec.length*1.4),angle=isGarage?previewAngle:2.38;
  const anchor=isGarage?workshopScene?.userData.service?.point:null;
- const focused=anchor?new THREE.Vector3(anchor.x*.44,1.85+(anchor.y-1.85)*.37,anchor.z*.50):new THREE.Vector3(0,1.85,0);
+ const focused=anchor?garageCameraBase.clone().lerp(new THREE.Vector3(anchor.x,anchor.y,anchor.z),.36):garageCameraBase;
  if(isGarage)garageCameraFocus.lerp(focused,1-Math.exp(-dt*3.5));
  const target=player.position.clone().add(isGarage?garageCameraFocus:new THREE.Vector3(0,1.85,0));
- const desired=target.clone().add(new THREE.Vector3(Math.sin(angle)*distance,distance*.2,Math.cos(angle)*distance));camera.position.lerp(desired,1-Math.exp(-dt*6));camera.lookAt(target);sun.position.copy(player.position.clone().add(new THREE.Vector3(-20,30,-15)));sun.target.position.copy(player.position);sun.target.updateMatrixWorld();
+ const desired=target.clone().add(new THREE.Vector3(Math.sin(angle)*distance,distance*.2,Math.cos(angle)*distance));camera.position.lerp(desired,1-Math.exp(-dt*6));camera.lookAt(target);
+  if(isGarage&&workshopScene)updateWorkshopCameraOcclusion(workshopScene,camera.position);sun.position.copy(player.position.clone().add(new THREE.Vector3(-20,30,-15)));sun.target.position.copy(player.position);sun.target.updateMatrixWorld();
  if(player.userData.trailer)player.userData.trailer.rotation.y=0;
  }}
 function renderWorld(){

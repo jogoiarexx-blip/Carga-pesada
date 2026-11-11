@@ -21,6 +21,7 @@ export function createWorkshopScene(){
   white:new THREE.MeshBasicMaterial({color:'#f6e5bd'}),
   glass:new THREE.MeshBasicMaterial({color:'#fbd99a'})
  };
+ materials.wallBack=materials.wall;materials.wallSide=materials.wall;
  const structural=new THREE.Group();structural.name='estrutura';root.add(structural);
  const details=new THREE.Group();details.name='equipamentos';root.add(details);
  const lights=new THREE.Group();lights.name='luminarias';root.add(lights);
@@ -42,8 +43,8 @@ export function createWorkshopScene(){
  }
  for(const x of [-4.2,4.2]){addBox(structural,'steel',x,-.012,-21,.42,.055,6);addBox(structural,'steel',x,-.012,21,.42,.055,6);}
  // Galpão com entrada aberta, garantindo espaço para todas as posições da câmera.
- addBox(structural,'wall',0,5.7,-43,64,11.4,.55);
- addBox(structural,'wall',-31.5,5.7,-7,.55,11.4,72);
+ addBox(structural,'wallBack',0,5.7,-43,64,11.4,.55);
+ addBox(structural,'wallSide',-31.5,5.7,-7,.55,11.4,72);
  addBox(structural,'upper',0,10.8,-42.58,64,1.2,.2);
  for(const x of [-30,30])for(const z of [-36,-12,12,34]){
   addBox(structural,'steel',x,6,z,.48,12,.48);
@@ -114,6 +115,8 @@ export function createWorkshopScene(){
    dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
   });
   mesh.instanceMatrix.needsUpdate=true;batch.parent.add(mesh);
+  if(id==='structure:wallSide')root.userData.sideWall=mesh;
+  if(id==='structure:wallBack')root.userData.backWall=mesh;
  }
  // Luminárias emissivas: poucos objetos e luzes sem sombras adicionais.
  for(const z of [-25,0,24])for(const x of [-16,16]){
@@ -297,4 +300,13 @@ export function updateWorkshopService(root,dt){
  });
  if(state.elapsed>=state.duration){stopWorkshopService(root);return {active:false,lift:0,focus:null};}
  return {active:true,lift,focus:state.point};
+}
+
+
+// When inspection moves outside the galpão, opaque walls must not hide the truck.
+export function updateWorkshopCameraOcclusion(root,cameraPosition){
+ if(!root||!cameraPosition)return;
+ const localX=cameraPosition.x-root.position.x,localZ=cameraPosition.z-root.position.z;
+ if(root.userData.sideWall)root.userData.sideWall.visible=localX>-30.7;
+ if(root.userData.backWall)root.userData.backWall.visible=localZ>-42;
 }
