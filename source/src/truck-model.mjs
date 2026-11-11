@@ -79,28 +79,35 @@ export function buildTruck(vehicle,color,bodyId){
   for(const side of [-1,1])box(bodyParent,1.14,bodyHeight-.16,.055,doorPaint,side*.6,base+bodyHeight/2,bodyEnd+.035,'folha da porta traseira');
   box(bodyParent,.055,bodyHeight,.13,black,0,base+bodyHeight/2,bodyEnd+.02,'divisão das portas');for(const x of [-.65,.65]){box(bodyParent,.045,bodyHeight-.3,.1,chrome,x,base+bodyHeight/2,bodyEnd+.12,'trava da porta');for(let y=base+.3;y<base+bodyHeight;y+=.8)box(bodyParent,.2,.06,.11,chrome,x,y,bodyEnd+.16);}
  }
+ // Peças de fábrica separadas: cada acessório substitui somente o conjunto correspondente.
+ // Os grupos dinâmicos são unidos por material e preservam os pivôs da carreta.
+ const factoryRearLights=new THREE.Group(),factoryRearBumper=new THREE.Group();
+ factoryRearLights.name='lanternas traseiras de fábrica';factoryRearLights.userData.dynamic=true;
+ factoryRearBumper.name='para-choque traseiro de fábrica';factoryRearBumper.userData.dynamic=true;
+ bodyParent.add(factoryRearLights,factoryRearBumper);
+ root.userData.factoryRearLights=factoryRearLights;root.userData.factoryRearBumper=factoryRearBumper;
  // Rear hardware is physically above the recessed door artwork, with no coplanar caps.
  for(const side of [-1,1]){
   if(v.body!=='tarp_trailer')for(const y of [base+.38,base+bodyHeight-.38]){box(bodyParent,.24,.16,.08,black,side*1.12,y,bodyEnd+.14,'dobradiça traseira');box(bodyParent,.09,.23,.12,chrome,side*1.16,y,bodyEnd+.17);}
-  box(bodyParent,.57,.24,.14,black,side*.95,1.1,bodyEnd+.11,'moldura da lanterna');
-  for(let i=0;i<3;i++)box(bodyParent,.15,.12,.04,[red,orange,white][i],side*.95+(i-1)*.17,1.1,bodyEnd+.195,'lentes da lanterna');
-  box(bodyParent,.65,.045,.05,black,side*.75,.58,bodyEnd+.22,'apoio do para-choque');
+  box(factoryRearLights,.57,.24,.14,black,side*.95,1.1,bodyEnd+.11,'moldura da lanterna');
+  for(let i=0;i<3;i++)box(factoryRearLights,.15,.12,.04,[red,orange,white][i],side*.95+(i-1)*.17,1.1,bodyEnd+.195,'lentes da lanterna');
+  box(factoryRearBumper,.65,.045,.05,black,side*.75,.58,bodyEnd+.22,'apoio do para-choque');
   const frontZ=v.cab==='classic'||v.cab==='aero'?.01:-.01;
   if(!customCab){box(cab,.46,.25,.06,black,side*.88,1.18,frontZ,'moldura dos faróis');box(cab,.34,.14,.055,lamp,side*.88,1.18,frontZ-.06,'lente dos faróis');}
   for(const z of layout.driveAxles)box(root,.13,.12,.48,black,side*1.23,1.28,z,'coroa do para-lama');
  }
  if(!customCab)for(const side of [-1,1]){const doorZ=v.cab==='classic'?3.2:v.cab==='aero'?3.38:2.05;box(cab,.025,.75,.035,black,side*(cabWidth/2+.04),1.72,doorZ,'junta da porta');box(cab,.035,.065,.27,chrome,side*(cabWidth/2+.055),2.04,doorZ-.28,'maçaneta');}
  for(let z=bodyStart+.5;z<bodyEnd;z+=1.2)box(bodyParent,2.26,.08,.08,black,0,1.31,z,'travessa do piso');
- for(const side of [-1,1]){box(bodyParent,.48,.16,.15,red,side*.95,1.1,bodyEnd+.1,'lanterna traseira');for(let z=bodyStart+.5;z<bodyEnd;z+=2)box(bodyParent,.07,.09,.18,orange,side*1.29,base+.12,z);}
- for(let i=0;i<8;i++)box(bodyParent,.23,.08,.035,i%2?red:white,-.84+i*.24,1.3,bodyEnd+.21,'faixa refletiva traseira');
- box(bodyParent,2.4,.18,.15,chrome,0,.7,bodyEnd+.22,'para-choque traseiro');box(bodyParent,.7,.17,.08,black,0,.99,bodyEnd+.16,'placa');
+ for(const side of [-1,1]){box(factoryRearLights,.48,.16,.15,red,side*.95,1.1,bodyEnd+.1,'lanterna traseira');for(let z=bodyStart+.5;z<bodyEnd;z+=2)box(bodyParent,.07,.09,.18,orange,side*1.29,base+.12,z);}
+ for(let i=0;i<8;i++)box(factoryRearLights,.23,.08,.035,i%2?red:white,-.84+i*.24,1.3,bodyEnd+.21,'faixa refletiva traseira');
+ box(factoryRearBumper,2.4,.18,.15,chrome,0,.7,bodyEnd+.22,'para-choque traseiro');box(factoryRearBumper,.7,.17,.08,black,0,.99,bodyEnd+.16,'placa');
  if(v.id==='aurora')detailAuroraChassis({root,cab,wheels,layout,box});
  if(v.id==='estradeiro')detailEstradeiroChassis({root,wheels,layout,box});
  if(v.id==='rochedo')detailRochedoAxles({root,wheels,layout,box});
  if(v.id==='peregrino')detailPeregrinoChassis({root,wheels,layout,box});
  if(v.id==='falcao')detailFalcaoChassis({root,wheels,layout,box});
  if(v.id==='imperador')detailImperadorChassis({root,wheels,layout,box});
- root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
+ root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);mergeStatic(factoryRearLights,true);mergeStatic(factoryRearBumper,true);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
 }
 export function animateTruck(model,steering,speed,dt,trailerYaw=0){for(const wheel of model.userData.wheels)wheel.rotation.x-=speed*Math.max(0,dt)/(wheel.userData.radius||model.userData.wheelRadius||.64);for(const pivot of model.userData.frontWheels)pivot.rotation.y=-steering;if(model.userData.trailer)model.userData.trailer.rotation.y=trailerYaw;}
 export function disposeTruck(model){model.userData.disposed=true;releaseTrees([model]);}
