@@ -2,14 +2,14 @@ import * as THREE from './vendor/three.module.js';
 
 // Cavalo mecânico de capô longo, original do jogo. Eixo local Z aponta para trás.
 // Todas as peças usam a pintura dinâmica já aplicada pelo motor à cabine.
-export function buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}) {
- const tireRubber=new THREE.MeshStandardMaterial({color:'#1b2021',roughness:.90});
- const dark=new THREE.MeshStandardMaterial({color:'#202a30',metalness:.16,roughness:.63});
- const grille=new THREE.MeshStandardMaterial({color:'#1b252a',metalness:.25,roughness:.63});
- const brushed=new THREE.MeshStandardMaterial({color:'#aab3ad',metalness:.62,roughness:.36});
- const polished=new THREE.MeshStandardMaterial({color:'#d3d9d5',metalness:.84,roughness:.21});
- const smoked=new THREE.MeshPhysicalMaterial({color:'#4b7885',metalness:.08,roughness:.21,transparent:true,opacity:.92,clearcoat:.4});
- const amber=new THREE.MeshStandardMaterial({color:'#f7af43',metalness:.10,roughness:.36});
+export function buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}) {
+ const tireRubber=finish({color:'#1b2021',roughness:.90});
+ const dark=finish({color:'#202a30',metalness:.16,roughness:.63});
+ const grille=finish({color:'#1b252a',metalness:.25,roughness:.63});
+ const brushed=finish({color:'#aab3ad',metalness:.62,roughness:.36});
+ const polished=finish({color:'#d3d9d5',metalness:.84,roughness:.21});
+ const smoked=finish({color:'#4b7885',metalness:.08,roughness:.21,transparent:true,opacity:.92,clearcoat:.4});
+ const amber=finish({color:'#f7af43',metalness:.10,roughness:.36});
 
  // Capô amplo, declive da frente, tampa e linhas de chapa. A cabine é elevada
  // atrás da saída do capô; o dormitório é integralmente separado da cabine.
@@ -102,7 +102,7 @@ export function buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,
  // o jogador instala seu conjunto de escapamento na oficina.
  const exhausts=new THREE.Group();exhausts.name='escapamentos originais Peregrino';
  exhausts.userData.dynamic=true;cab.add(exhausts);
- const metal=new THREE.MeshStandardMaterial({color:'#acb3b4',metalness:.82,roughness:.28});
+ const metal=finish({color:'#acb3b4',metalness:.82,roughness:.28});
  for(const side of [-1,1]){
   const x=side*1.47,z=3.99;
   const tube=new THREE.Mesh(new THREE.CylinderGeometry(.095,.13,3.38,12),metal);
@@ -130,12 +130,12 @@ export function buildPeregrinoCab({cab,box,profile,rod,paint,chrome,black,glass,
  return exhausts;
 }
 
-export function detailPeregrinoChassis({root,wheels,layout,box}){
- const bolts=new THREE.MeshStandardMaterial({color:'#323c42',metalness:.42,roughness:.47});
- const metal=new THREE.MeshStandardMaterial({color:'#aeb8b7',metalness:.68,roughness:.30});
- const saddle=new THREE.MeshStandardMaterial({color:'#171f22',metalness:.23,roughness:.61});
- const amber=new THREE.MeshStandardMaterial({color:'#f0ac44',roughness:.48});
- const red=new THREE.MeshStandardMaterial({color:'#c94e39',roughness:.48});
+export function detailPeregrinoChassis({root,wheels,layout,box,finish}){
+ const bolts=finish({color:'#323c42',metalness:.42,roughness:.47});
+ const metal=finish({color:'#aeb8b7',metalness:.68,roughness:.30});
+ const saddle=finish({color:'#171f22',metalness:.23,roughness:.61});
+ const amber=finish({color:'#f0ac44',roughness:.48});
+ const red=finish({color:'#c94e39',roughness:.48});
  // Detalhamento ligado aos pivôs de cada roda (incluindo três eixos da carreta).
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
