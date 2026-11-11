@@ -2,15 +2,15 @@ import * as THREE from './vendor/three.module.js';
 
 // Modelo exclusivo do Aurora 90. A cabine olha para -Z e a roda esterça em Y.
 // Preserva dimensões, encaixes de acessórios, economia e saves existentes.
-export function buildAuroraCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}){
- const seal=new THREE.MeshStandardMaterial({color:'#101c21',roughness:.82});
- const grille=new THREE.MeshStandardMaterial({color:'#28383b',metalness:.22,roughness:.69});
- const steel=new THREE.MeshStandardMaterial({color:'#818d8b',metalness:.48,roughness:.51});
- const warm=new THREE.MeshStandardMaterial({color:'#dfaa65',metalness:.28,roughness:.54});
- const lightGlass=new THREE.MeshPhysicalMaterial({color:'#8daab1',metalness:.06,roughness:.23,transparent:true,opacity:.93,clearcoat:.43});
- const backWindow=new THREE.MeshStandardMaterial({color:'#243f4c',metalness:.28,roughness:.28});
- const tyreBlack=new THREE.MeshStandardMaterial({color:'#101619',roughness:.9});
- const bolt=new THREE.MeshStandardMaterial({color:'#b2b6a9',metalness:.52,roughness:.35});
+export function buildAuroraCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}){
+ const seal=finish({color:'#101c21',roughness:.82});
+ const grille=finish({color:'#28383b',metalness:.22,roughness:.69});
+ const steel=finish({color:'#818d8b',metalness:.48,roughness:.51});
+ const warm=finish({color:'#dfaa65',metalness:.28,roughness:.54});
+ const lightGlass=finish({color:'#8daab1',metalness:.06,roughness:.23,transparent:true,opacity:.93,clearcoat:.43});
+ const backWindow=finish({color:'#243f4c',metalness:.28,roughness:.28});
+ const tyreBlack=finish({color:'#101619',roughness:.9});
+ const bolt=finish({color:'#b2b6a9',metalness:.52,roughness:.35});
 
  // Cabine avançada: vinco do capô, teto arredondado e arco de roda recortado.
  profile(cab,[[.11,.96],[.11,2.40],[.39,2.92],[.63,3.08],[2.22,3.08],[2.55,2.83],[2.57,.96],[2.25,.96],[2.13,1.14],[1.93,1.32],[1.50,1.39],[1.09,1.32],[.91,1.13],[.80,.96]],2.28,paint,'Aurora 90 — cabine perfilada');
@@ -101,12 +101,12 @@ export function buildAuroraCab({cab,box,profile,rod,paint,chrome,black,glass,lam
  }
 }
 
-export function detailAuroraChassis({root,wheels,layout,box}){
- const wheelSteel=new THREE.MeshStandardMaterial({color:'#aeb9b5',metalness:.68,roughness:.32});
- const wheelShadow=new THREE.MeshStandardMaterial({color:'#111b1e',roughness:.81});
- const rubber=new THREE.MeshStandardMaterial({color:'#262b2b',roughness:.94});
- const frame=new THREE.MeshStandardMaterial({color:'#69777a',metalness:.45,roughness:.61});
- const reflect=new THREE.MeshStandardMaterial({color:'#d49b35',metalness:.1,roughness:.5});
+export function detailAuroraChassis({root,wheels,layout,box,finish}){
+ const wheelSteel=finish({color:'#aeb9b5',metalness:.68,roughness:.32});
+ const wheelShadow=finish({color:'#111b1e',roughness:.81});
+ const rubber=finish({color:'#262b2b',roughness:.94});
+ const frame=finish({color:'#69777a',metalness:.45,roughness:.61});
+ const reflect=finish({color:'#d49b35',metalness:.1,roughness:.5});
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
   const ring=new THREE.Mesh(new THREE.TorusGeometry(r*.60,.034,6,18),wheelSteel);
