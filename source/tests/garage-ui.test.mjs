@@ -88,3 +88,27 @@ test('sidebar adaptativa mantém prévia 3D e navegação mobile',()=>{
  assert.match(css,/\.garage-stage\{order:4\}/);
  assert.match(html,/data-page="home" type="button"/);
 });
+
+
+test('painel premium apresenta quatro características dinâmicas e ícones vetoriais',()=>{
+ assert.match(code,/const garageDetailIcons=Object\.freeze/);
+ assert.match(code,/function garageDetailIcon\(kind\)/);
+ assert.match(code,/class="garage-details-heading"/);
+ assert.match(code,/class="truck-data" aria-label="Características do caminhão"/);
+ assert.match(code,/class="garage-stat-tile"/);
+ for(const name of ['capacity','speed','length','axles'])assert.match(code,new RegExp("garageDetailIcon\\('"+name+"'\\)"));
+ for(const metric of ['CAPACIDADE','VELOCIDADE','COMPRIMENTO','EIXOS NO CONJUNTO'])assert.match(code,new RegExp('>'+metric+'</span>'));
+ assert.match(css,/REV27 — Painel de detalhes premium/);
+ assert.match(css,/\.garage-stat-tile\{/);
+});
+test('comparação, configuração e botões continuam funcionais com o novo visual',()=>{
+ assert.match(code,/class="garage-compare-panel"/);
+ assert.match(code,/class="garage-select-wrap"/);
+ assert.match(code,/id="bodyPreview" aria-labelledby="garageBodyLabel"/);
+ for(const id of ['useTruck','buyTruck','openWorkshop','installBody'])assert.match(code,new RegExp('id="'+id+'"'));
+ assert.match(code,/\$\('bodyPreview'\)\.onchange/);
+ assert.match(code,/\$\('useTruck'\)\.onclick/);
+ assert.match(code,/\$\('buyTruck'\)\.onclick/);
+ assert.match(css,/\.garage-details::-webkit-scrollbar-thumb/);
+ assert.match(css,/\.garage-use-button\.is-equipped:disabled/);
+});
