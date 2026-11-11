@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {workshopServiceAnchor} from './workshop-anchors.mjs';
+import {workshopConcretePixels} from './workshop-finish.mjs';
 
 // A Oficina Farol possui um único cenário compartilhado pelos seis caminhões.
 // Geometrias estáticas são agrupadas por material (InstancedMesh) para limitar draw calls.
@@ -7,17 +8,17 @@ export const WORKSHOP_LIMITS=Object.freeze({width:64,depth:88,height:12.8});
 export function createWorkshopScene(){
  const root=new THREE.Group();root.name='oficina-farol-3d';
  const materials={
-  concrete:new THREE.MeshStandardMaterial({color:'#707c75',roughness:.98}),
+  concrete:new THREE.MeshStandardMaterial({color:'#b4bdb2',roughness:1}),
   slab:new THREE.MeshStandardMaterial({color:'#52655b',roughness:.93}),
-  wall:new THREE.MeshStandardMaterial({color:'#455b55',roughness:.92,metalness:.12}),
-  upper:new THREE.MeshStandardMaterial({color:'#6c8980',roughness:.84,metalness:.2}),
-  steel:new THREE.MeshStandardMaterial({color:'#202f2d',roughness:.58,metalness:.55}),
-  chrome:new THREE.MeshStandardMaterial({color:'#b9c7bb',roughness:.42,metalness:.64}),
+  wall:new THREE.MeshStandardMaterial({color:'#586e66',roughness:.87,metalness:.15}),
+  upper:new THREE.MeshStandardMaterial({color:'#789188',roughness:.8,metalness:.24}),
+  steel:new THREE.MeshStandardMaterial({color:'#344945',roughness:.54,metalness:.66}),
+  chrome:new THREE.MeshStandardMaterial({color:'#c8d2c9',roughness:.28,metalness:.8}),
   yellow:new THREE.MeshStandardMaterial({color:'#d2a447',roughness:.8}),
   red:new THREE.MeshStandardMaterial({color:'#a65341',roughness:.7}),
   dark:new THREE.MeshStandardMaterial({color:'#132321',roughness:.85}),
   tools:new THREE.MeshStandardMaterial({color:'#bfcac4',roughness:.5,metalness:.4}),
-  timber:new THREE.MeshStandardMaterial({color:'#736653',roughness:.94}),
+  timber:new THREE.MeshStandardMaterial({color:'#84775f',roughness:.9}),
   white:new THREE.MeshBasicMaterial({color:'#f6e5bd'}),
   glass:new THREE.MeshBasicMaterial({color:'#fbd99a'})
  };
@@ -32,10 +33,28 @@ export function createWorkshopScene(){
   if(!batch){batch={parent,material:materials[key],transforms:[]};batches.set(id,batch);}
   batch.transforms.push([x,y,z,w,h,d]);
  }
+ // Texture is generated once on first garage visit, never during animation.
+ root.userData.floorTexture=null;
+ if(typeof document!=='undefined'){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+  const context=canvas.getContext('2d');
+  if(context){
+   const image=context.createImageData(256,256);
+   image.data.set(workshopConcretePixels(256));
+   context.putImageData(image,0,0);
+   const texture=new THREE.CanvasTexture(canvas);
+   texture.wrapS=THREE.RepeatWrapping;texture.wrapT=THREE.RepeatWrapping;
+   texture.repeat.set(8,12);texture.colorSpace=THREE.SRGBColorSpace;
+   texture.anisotropy=2;
+   materials.concrete.map=texture;materials.concrete.needsUpdate=true;
+   root.userData.floorTexture=texture;
+  }
+ }
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(64,88),materials.concrete);
  floor.name='piso-de-concreto';floor.rotation.x=-Math.PI/2;floor.position.y=-.11;floor.receiveShadow=true;structural.add(floor);
  // Faixa central de serviço e marcações, visíveis sem custosos mapas de sombras.
- addBox(structural,'slab',0,-.075,0,18,.035,52);
+ // Keep the central bay visible so the textured concrete is not covered by a plain slab.
+ for(const x of [-7.9,7.9])addBox(structural,'slab',x,-.088,0,.5,.02,52);
  for(const x of [-8.5,8.5])addBox(structural,'yellow',x,-.048,0,.12,.015,51);
  for(let z=-23;z<=23;z+=5){
   addBox(structural,'upper',-8.4,-.04,z,1,.016,.13);
@@ -118,14 +137,23 @@ export function createWorkshopScene(){
   if(id==='structure:wallSide')root.userData.sideWall=mesh;
   if(id==='structure:wallBack')root.userData.backWall=mesh;
  }
- // Luminárias emissivas: poucos objetos e luzes sem sombras adicionais.
- for(const z of [-25,0,24])for(const x of [-16,16]){
-  addLightFixture(x,z);
- }
- function addLightFixture(x,z){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(3,.13,.58),materials.white);
-  m.name='luminaria-led';m.position.set(x,11.5,z);lights.add(m);
- }
+ // Six fixtures need only two draw calls: instanced steel casings and diffusers.
+ const fixtures=[...[-25,0,24].flatMap(z=>[-16,16].map(x=>[x,z]))];
+ const housing=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),materials.steel,fixtures.length);
+ const diffuserMat=new THREE.MeshBasicMaterial({color:'#ecf4e0',toneMapped:false});
+ const diffuser=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),diffuserMat,fixtures.length);
+ housing.name='luminaria-armacao';diffuser.name='luminaria-led';
+ const fixtureDummy=new THREE.Object3D();
+ fixtures.forEach(([x,z],i)=>{
+  fixtureDummy.position.set(x,11.53,z);fixtureDummy.scale.set(3.5,.24,.82);
+  fixtureDummy.updateMatrix();housing.setMatrixAt(i,fixtureDummy.matrix);
+  fixtureDummy.position.y=11.38;fixtureDummy.scale.set(3.12,.045,.56);
+  fixtureDummy.updateMatrix();diffuser.setMatrixAt(i,fixtureDummy.matrix);
+ });
+ housing.instanceMatrix.needsUpdate=true;diffuser.instanceMatrix.needsUpdate=true;
+ housing.frustumCulled=false;diffuser.frustumCulled=false;
+ lights.add(housing,diffuser);
+ root.userData.ledDiffuser=diffuser;
  const point=new THREE.PointLight('#ffdb9a',14,43,2);
  point.name='luz-de-servico';point.position.set(0,9.8,-4);point.castShadow=false;lights.add(point);
  // Placa da oficina: textura procedural minúscula, carregada só ao abrir a garagem.
@@ -213,6 +241,7 @@ export function setWorkshopQuality(root,preset='balanced'){
  if(!root)return;
  root.userData.detailGroup.visible=preset!=='eco';
  root.userData.quality=preset;
+ if(root.userData.ledDiffuser)root.userData.ledDiffuser.material.color.set(preset==='eco'?'#b8c5b5':preset==='high'?'#fff7e4':'#e8efe0');
  const service=root.userData.service;
  root.userData.serviceLight.visible=preset==='high'||(preset==='balanced'&&!!service);
  root.userData.serviceLight.intensity=preset==='high'?12:7;

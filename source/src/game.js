@@ -27,6 +27,7 @@ import {decorateTruck,animateDecoration} from './truck-decoration.mjs';
 import {studioEnvironment,addContactShadow} from './truck-studio.mjs';
 import {createWorkshopScene,setWorkshopQuality,configureWorkshopVehicle,beginWorkshopService,stopWorkshopService,updateWorkshopService,updateWorkshopCameraOcclusion} from './workshop-scene.mjs';
 import {workshopCameraDistance,workshopFitBounds} from './workshop-camera.mjs';
+import {workshopLighting} from './workshop-finish.mjs';
 import {importArt} from './art-store.mjs';
 const $=id=>document.getElementById(id),money=n=>'CR$ '+Math.round(n).toLocaleString('pt-BR');
 let savedRaw=null;try{savedRaw=localStorage.getItem('carga-pesada-v1');}catch{}
@@ -35,7 +36,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.34';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.35';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -96,7 +97,21 @@ function replacePlayer(vehicleId=save.selected,bodyId){
 let decorationEpoch=0,draftDecoration=normalizeDecoration(),currentPage='home',garageTab='fleet',previewId=save.selected,previewBody=null,previewAngle=2.55,previewSpin=false,previewDistance=24,paintChoice=null;
 const garageCameraFocus=new THREE.Vector3(0,1.85,0),garageCameraBase=new THREE.Vector3(0,1.85,0);
 let garageModelBounds=null;
-function applyLighting(){document.body.dataset.night=night?'true':'false';hemi.intensity=night?1.0:2.3;sun.intensity=night?.4:3.1;renderer.night=night;environment.traverse(o=>{if(o.name==='route-sun')o.visible=!night;});if(mode==='drive'||mode==='paused'||mode==='result'){scene.background=skyImages[activeRoute.id+'-'+(night?'noite':'dia')]||new THREE.Color(activeRoute.sky);scene.fog.color.set(night?'#0a1c2d':activeRoute.sky);renderer.palette={sky:night?'#071624':activeRoute.sky,grass:night?'#253a31':activeRoute.grass};}}
+function applyLighting(){
+ document.body.dataset.night=night?'true':'false';
+ const preset=workshopLighting(mode,graphicsQuality,night);
+ hemi.intensity=preset.hemisphere;hemi.color.set(preset.sky);hemi.groundColor.set(preset.ground);
+ sun.intensity=preset.sun;sun.color.set(preset.key);sun.castShadow=preset.shadows;
+ renderer.toneMappingExposure=preset.exposure;
+ renderer.night=night;
+ environment.traverse(o=>{if(o.name==='route-sun')o.visible=!night;});
+ if(mode==='garage')scene.fog.color.set('#a8b8ad');
+ if(mode==='drive'||mode==='paused'||mode==='result'){
+  scene.background=skyImages[activeRoute.id+'-'+(night?'noite':'dia')]||new THREE.Color(activeRoute.sky);
+  scene.fog.color.set(night?'#0a1c2d':activeRoute.sky);
+  renderer.palette={sky:night?'#071624':activeRoute.sky,grass:night?'#253a31':activeRoute.grass};
+ }
+}
 function menuStage(on){environment.visible=!on;configureWorkshopScene(on&&mode==='garage');scene.background=on?null:new THREE.Color(activeRoute.sky);applyLighting();}
 
 function cleanupTraffic(){traffic.forEach(t=>{scene.remove(t.mesh);t.mesh.traverse(o=>{o.geometry?.dispose();if(o.material&&!Object.values(mats).includes(o.material))o.material.dispose();});});traffic=[];if(rival){scene.remove(rival.mesh);disposeTruck(rival.mesh);rival=null;}}
@@ -249,7 +264,7 @@ function showMenuPanel(which){
   $('panelMedals').onclick=()=>{closeMenuPanel();showPage('contracts')};
  }else if(which==='options'){
   body.innerHTML=`<p>Configure o jogo. O áudio e a qualidade gráfica são os mesmos usados durante as viagens.</p><label class="cp-panel-field">QUALIDADE GRÁFICA<select id="menuGraphicsQuality"><option value="high">Alta · mais detalhes</option><option value="balanced">Equilibrada · recomendada</option><option value="eco">Econômica · maior desempenho</option></select></label><label class="cp-panel-field">VOLUME DOS EFEITOS<input id="menuEffectsVolume" type="range" min="0" max="1" step="0.01" aria-label="Volume dos efeitos sonoros"></label><label class="cp-panel-field">VOLUME DA MÚSICA<input id="menuMusicVolume" type="range" min="0" max="1" step="0.01" aria-label="Volume da música do jogo"></label><p class="cp-panel-status" id="menuOptionsFeedback" role="status">As preferências são aplicadas e salvas automaticamente.</p><div class="cp-panel-actions"><button id="menuHelpOptions">VER CONTROLES</button></div>`;
-  $('menuGraphicsQuality').value=graphicsQuality;$('menuGraphicsQuality').onchange=e=>{graphicsQuality=normalizeGraphicsQuality(e.target.value);applyGraphicsQuality();$('graphicsQuality').value=graphicsQuality;try{localStorage.setItem('carga-pesada-graphics',graphicsQuality)}catch{}$('menuOptionsFeedback').textContent='Qualidade gráfica aplicada.'};
+  $('menuGraphicsQuality').value=graphicsQuality;$('menuGraphicsQuality').onchange=e=>{graphicsQuality=normalizeGraphicsQuality(e.target.value);applyGraphicsQuality();applyLighting();$('graphicsQuality').value=graphicsQuality;try{localStorage.setItem('carga-pesada-graphics',graphicsQuality)}catch{}$('menuOptionsFeedback').textContent='Qualidade gráfica aplicada.'};
   $('menuEffectsVolume').value=effectsVolume;$('menuEffectsVolume').oninput=e=>{effectsVolume=Number(e.target.value);sounds?.setVolume(effectsVolume);try{localStorage.setItem('carga-pesada-effects-volume',effectsVolume)}catch{}$('menuOptionsFeedback').textContent='Volume dos efeitos atualizado.'};$('menuMusicVolume').value=musicVolume;$('menuMusicVolume').oninput=e=>{musicVolume=Number(e.target.value);save.musicVolume=musicVolume;$('musicVolume').value=musicVolume;music?.setVolume(musicVolume);persist();$('menuOptionsFeedback').textContent='Volume atualizado.'};
   $('menuHelpOptions').onclick=()=>{closeMenuPanel();$('helpBtn').click()};
  }else if(which==='extras'){
@@ -272,7 +287,7 @@ function renderHome(){
  document.querySelectorAll('[data-contract]').forEach(b=>b.onclick=()=>brief(CONTRACTS.find(c=>c.id===b.dataset.contract)));
 }
 function brief(c){if(!isUnlocked(c,save))return;mission=c;const v=VEHICLES.find(v=>v.id===save.selected),gate=entryCheck(c,v,save.fleet[v.id]);$('brief').innerHTML=`<button class="close" id="closeBrief" aria-label="Fechar missão">×</button><span class="eyebrow">${c.race?'EVENTO ESPORTIVO · VIA FECHADA':'MANIFESTO DE CARGA · FREQUÊNCIA 17'}</span><h2>${c.name}</h2><p>${c.route}<br><span class="muted">${routeFor(c).name} · ${routeFor(c).theme} · ${c.night?'NOITE':'DIA'}</span></p><p>${STORY[c.id].speaker}: ${STORY[c.id].brief}</p><div class="brief-detail"><span>PERCURSO<b>${(c.length/1000).toFixed(1)} km</b></span><span>PRAZO<b>${Math.floor(c.time/60)}min ${c.time%60}s</b></span><span>RECOMPENSA<b>${money(c.pay)}</b></span></div><p class="first-bonus">${save.campaign.bonusesClaimed.includes(c.id)?'Repetição: pagamento normal, sem bônus de estreia.':`Bônus único pela primeira conclusão: + ${money(STORY[c.id].bonus)}.`}</p><p>${c.race?`Vença ${c.rival||'Coiote'}. Carros de apoio circulam no circuito e atrapalham os dois caminhões. Desvie ou freie: colisões tiram velocidade e geram custos.`:'Carga: '+c.weight+' t · Integridade mínima: '+c.min+'% · Pedágio: '+money(c.toll)+'.'}<br>Combustível e reparos serão descontados no resultado. Avarias desta viagem são reparadas ao concluir com sucesso. Abastecimento incluído na partida.</p><p class="muted">${v.name} · Condição ${Math.round(save.fleet[v.id].health)}% · ${c.race?'Vácuo esportivo: siga o rival por 2 segundos para ganhar impulso.':'Use W para acelerar e A/D para virar. Saia com cuidado.'}</p><p class="entry-requirements">PREPARAÇÃO: capacidade ${gate.requirements.capacity} t · motor N${gate.requirements.engine} · freios N${gate.requirements.brakes}${gate.requirements.speed?' · desempenho ' + gate.requirements.speed+' km/h':''}<br>${gate.ok?'Caminhão apto para esta fase.':gate.reason}</p>${!c.race?'<p class="first-bonus">Bônus de prazo: até 20% do frete. Exige carga ≥ 90% e perda de integridade do caminhão ≤ 5 pontos.</p>':''}${!gate.ok?'<button class="outline" id="prepareTruck">PREPARAR NA OFICINA ↗</button>':''}<button class="primary" id="start">${save.fleet[v.id].health<15?'REPARE O CAMINHÃO NA OFICINA':!gate.ok?'PREPARAÇÃO NECESSÁRIA':c.race?'CONVERSAR COM O RIVAL ↗':'ACEITAR E PARTIR ↗'}</button>`;$('brief').classList.remove('hidden');$('closeBrief').onclick=()=>$('brief').classList.add('hidden');$('start').disabled=save.fleet[v.id].health<15||!gate.ok;$('start').onclick=startMission;if($('prepareTruck'))$('prepareTruck').onclick=()=>{garageTab='workshop';serviceOpen=true;previewId=save.selected;showPage('garage');};}
-$('graphicsQuality').value=graphicsQuality;$('graphicsQuality').onchange=e=>{graphicsQuality=normalizeGraphicsQuality(e.target.value);applyGraphicsQuality();try{localStorage.setItem('carga-pesada-graphics',graphicsQuality);}catch{}toast('Qualidade gráfica: '+e.target.selectedOptions[0].text+'.');};
+$('graphicsQuality').value=graphicsQuality;$('graphicsQuality').onchange=e=>{graphicsQuality=normalizeGraphicsQuality(e.target.value);applyGraphicsQuality();applyLighting();try{localStorage.setItem('carga-pesada-graphics',graphicsQuality);}catch{}toast('Qualidade gráfica: '+e.target.selectedOptions[0].text+'.');};
 let music;let musicVolume=Math.max(0,Math.min(1,Number.isFinite(Number(save.musicVolume))?Number(save.musicVolume):.25));$('musicVolume').value=musicVolume;$('musicVolume').oninput=e=>{musicVolume=Number(e.target.value);save.musicVolume=musicVolume;music?.setVolume(musicVolume);persist();};
 let audio,sounds;let effectsVolume=.6;try{const stored=localStorage.getItem('carga-pesada-effects-volume');if(stored!==null&&Number.isFinite(Number(stored)))effectsVolume=Math.max(0,Math.min(1,Number(stored)));}catch{}
 function initAudio(){if(!sounds){sounds=new RecordedSounds();sounds.setVolume(effectsVolume);}if(!audio)try{const ctx=new AudioContext();audio={ctx};music=new RoadMusic(ctx,musicVolume);sounds?.enableAudioLoop(ctx);}catch{} }

@@ -255,3 +255,13 @@ body[data-screen="garage"] .workshop-service-status{pointer-events:none}
 @media(max-width:390px){
  body[data-screen="garage"] .garage-stage{height:325px;min-height:325px}
 }
+
+
+/* REV25: the real 3D workshop replaces the old photographic double background. */
+body[data-screen="garage"] #garageBackdrop{background:#182e27!important}
+body[data-screen="garage"] #garageBackdrop:after{
+ background:radial-gradient(ellipse at 52% 40%,rgba(117,156,133,.12),transparent 68%),
+ linear-gradient(180deg,rgba(9,30,24,.12),rgba(8,24,21,.6))!important
+}
+body[data-screen="garage"] .garage-stage{isolation:isolate}
+body[data-screen="garage"] .stage-note{text-shadow:0 2px 8px #06140d,0 0 3px #05100b}

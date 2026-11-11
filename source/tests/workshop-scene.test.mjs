@@ -153,3 +153,19 @@ test('paredes desaparecem quando ficariam entre a câmera externa e o caminhão'
  updateWorkshopCameraOcclusion(s,{x:12,y:5,z:-20});
  assert.equal(side.visible,true);assert.equal(back.visible,true);
 });
+
+
+test('lâmpadas LED do galpão compartilham geometrias instanciadas',()=>{
+ const s=createWorkshopScene(),housings=[],leds=[];
+ s.traverse(o=>{if(o.name==='luminaria-armacao')housings.push(o);if(o.name==='luminaria-led')leds.push(o)});
+ assert.equal(housings.length,1);
+ assert.equal(leds.length,1);
+ assert.equal(housings[0].count,6);
+ assert.equal(leds[0].count,6);
+ assert.equal(s.userData.floorTexture,null,'texture must load lazily without DOM');
+ const high=leds[0].material.color.clone();
+ setWorkshopQuality(s,'eco');
+ assert.notEqual(leds[0].material.color.getHexString(),high.getHexString());
+ setWorkshopQuality(s,'high');
+ assert.equal(leds[0].material.color.getHexString(),'fff7e4');
+});

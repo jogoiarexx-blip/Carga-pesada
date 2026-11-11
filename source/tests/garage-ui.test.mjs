@@ -61,3 +61,11 @@ test('enquadramento usa geometria real e retira paredes que escondem o caminhão
  assert.match(code,/garageCameraFocus\.copy\(garageCameraBase\)/);
  assert.match(code,/updateWorkshopCameraOcclusion\(workshopScene,camera\.position\)/);
 });
+
+test('prévia aplica iluminação da oficina e restaura a estrada ao trocar modo',()=>{
+ assert.match(code,/const preset=workshopLighting\(mode,graphicsQuality,night\)/);
+ assert.match(code,/sun\.castShadow=preset\.shadows/);
+ assert.match(code,/renderer\.toneMappingExposure=preset\.exposure/);
+ assert.match(code,/applyGraphicsQuality\(\);applyLighting\(\);/);
+ assert.match(css,/body\[data-screen="garage"\] #garageBackdrop\{background:#182e27!important\}/);
+});
