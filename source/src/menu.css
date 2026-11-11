@@ -169,3 +169,31 @@ body[data-screen="home"] #header{background:linear-gradient(100deg,rgba(3,17,16,
 @media(prefers-reduced-motion:reduce){.cp-action,.cp-info-card{transition:none!important}}
 
 .cinematic{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(0deg,#061512f2 0%,#08161180 29%,transparent 58%),linear-gradient(180deg,#04120ec9,transparent 25%);color:#f5ebd5}.cinematic.hidden{display:none}.cinematic-top{display:flex;justify-content:space-between;align-items:center;background:#06120f;padding:clamp(14px,2.5vh,25px) 5vw;letter-spacing:2px;font-size:10px;color:#e2b568}.cinematic-top button,.cinematic-caption button{background:#102c24dd;border:1px solid #dbc28b80;border-radius:3px;padding:12px 16px;font-size:10px;letter-spacing:1px}.cinematic-caption{position:absolute;left:6vw;bottom:10vh;max-width:min(580px,86vw);text-shadow:0 2px 8px #000}.cinematic-caption span{font-size:10px;letter-spacing:2px;color:#e5bd76}.cinematic-caption h2{font:400 clamp(32px,5vw,60px)/1.05 Georgia,serif;letter-spacing:-1px;margin:12px 0}.cinematic-caption p{font-size:clamp(14px,1.6vw,19px);line-height:1.55;margin:0 0 20px}.cinematic-bottom{height:4vh;background:#06120f}@media(max-width:600px){.cinematic-caption{bottom:8vh}.cinematic-caption h2{font-size:32px}.cinematic-top{gap:10px}.cinematic-caption p{font-size:15px}}
+
+/* Oficina Farol REV19: câmera com vistas rápidas e serviço legível em telas pequenas. */
+.garage-stage{pointer-events:auto;touch-action:pan-y;cursor:grab}
+.garage-stage:active{cursor:grabbing}
+.garage-stage button,.garage-stage input{cursor:pointer}
+.stage-presets{position:absolute;top:48px;left:0;right:0;display:flex;justify-content:center;flex-wrap:wrap;gap:6px;z-index:2;pointer-events:auto}
+.stage-presets button{padding:8px 11px;background:#102c24e8;color:#edebd5;border:1px solid #c8b78477;border-radius:4px;font-size:10px;letter-spacing:.5px;min-height:36px}
+.stage-presets button[aria-pressed=true]{background:#d0ab61;color:#10271f;border-color:#eac680}
+.workshop-overview{display:grid;gap:6px;margin:16px 0;padding:14px;border:1px solid #c2b58088;background:#1c3930;border-radius:5px}
+.workshop-overview strong{color:#f3d49c;font-size:12px;letter-spacing:.8px}
+.workshop-overview span{font-size:12px;color:#edf1e0}
+.workshop-overview small{font-size:11px;color:#c9d3be;line-height:1.5}
+.garage-details .workshop-services[open]>summary{margin-bottom:8px}
+@media(max-width:800px){
+ .garage-stage{position:sticky;top:6px;z-index:5;min-height:220px;height:220px;background:linear-gradient(180deg,#071d19d9 0%,#17332950 70%,#071d19cf 100%);border:1px solid #a3a98245;border-radius:6px}
+ .stage-presets{top:30px;gap:4px}
+ .stage-presets button{font-size:9px;padding:6px 8px;min-height:34px}
+ .stage-tag{top:7px;font-size:10px}
+ .stage-controls{bottom:25px}
+ .stage-note{font-size:9px;bottom:5px}
+ .garage-tabs button{font-size:11px;min-height:44px;white-space:normal;text-align:center}
+ .garage-card small,.garage-list-heading,.garage-back{font-size:11px}
+ .garage-details h3,.garage-description,.garage-details .workshop-note{font-size:12px}
+ .garage-details .primary,.garage-details .outline{font-size:12px;min-height:44px}
+ .truck-data span,.garage-price small{font-size:10px}
+ .garage-details .service button{font-size:12px;min-height:44px}
+}
+@media(max-width:390px){.stage-presets button{font-size:8px;padding:5px 6px}.stage-controls label{padding:7px}.stage-controls input{width:52px}}

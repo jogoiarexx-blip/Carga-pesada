@@ -1,4 +1,5 @@
 import {RecordedSounds} from './recorded-sounds.mjs';
+import {commitGarageMutation} from './garage-transaction.mjs';
 import {INTRO_SCENES,CREDIT_SCENES,sceneAt,shouldPlayIntro,shouldPlayCredits} from './cinematics.mjs';
 import {MEDALS} from './achievements.mjs';
 import {makeBackup,parseBackup,artReferences,BACKUP_LIMIT} from './career-backup.mjs';
@@ -91,7 +92,7 @@ function menuStage(on){environment.visible=!on;scene.background=on?null:new THRE
 function cleanupTraffic(){traffic.forEach(t=>{scene.remove(t.mesh);t.mesh.traverse(o=>{o.geometry?.dispose();if(o.material&&!Object.values(mats).includes(o.material))o.material.dispose();});});traffic=[];if(rival){scene.remove(rival.mesh);disposeTruck(rival.mesh);rival=null;}}
 function showPage(page,updateHash=true){
  if(mode==='drive'||mode==='paused')return;
- closeMenuPanel();currentPage=page;mode=page;decorationEpoch++;persist();document.body.dataset.screen=page;
+ closeMenuPanel();currentPage=page;mode=page;night=false;decorationEpoch++;persist();document.body.dataset.screen=page;
  for(const [id,key] of [['home','home'],['garage','garage'],['contractsPage','contracts']])$(id).classList.toggle('hidden',key!==page);
  for(const id of ['hud','result','pauseScreen','brief','duelIntro'])$(id).classList.add('hidden');$('header').classList.remove('hidden');finishGate.visible=false;cleanupTraffic();menuStage(true);
  document.querySelectorAll('[data-page]').forEach(button=>{button.classList.toggle('active',button.dataset.page===page);if(button.dataset.page===page)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
@@ -105,7 +106,7 @@ function updateGaragePreview(reset=false){
  const base=VEHICLES.find(v=>v.id===previewId);if(!base.bodyOptions.includes(previewBody))previewBody=save.fleet[previewId]?.body||base.defaultBody;
  if(reset){decorationEpoch++;draftDecoration=normalizeDecoration(save.fleet[previewId]?.decoration);}
  replacePlayer(previewId,previewBody);player.rotation.y=0;if(paintChoice)player.userData.paint.color.set(paintChoice);
- if(reset){previewDistance=Math.max(17,base.length*1.45);previewAngle=2.45;previewSpin=false;}$('previewZoom').value=previewDistance;renderGarageDetails();
+ if(reset){previewDistance=Math.max(17,base.length*1.45);previewAngle=2.45;previewSpin=false;}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
 }
 function vehicleIcon(v,color){const hood=v.cab==='classic'||v.cab==='aero',rear=v.category==='tractor'?94:88;return `<svg viewBox="0 0 120 50" aria-hidden="true"><path d="M2 41H117" stroke="#a6b294" opacity=".4"/><path d="${hood?'M5 33V24L20 22L25 12H43V35H5Z':'M6 35V15L12 10H33V35Z'}" fill="${color}" stroke="#ced2ab" stroke-width=".7"/><path d="${hood?'M24 22L28 15H38V23Z':'M11 16H27V24H11Z'}" fill="#142c28"/><path d="M${hood?45:36} 14H112V34H${hood?45:36}Z" fill="${v.defaultBody==='tarp_trailer'?'#bb853b':'#a4b5a3'}" stroke="#d4d6bc" stroke-width=".7"/><path d="M44 34H114V38H26V34" fill="#102a24"/><g fill="#10231e" stroke="#b9c2ac" stroke-width="1.2"><circle cx="17" cy="38" r="6"/><circle cx="${rear-5}" cy="38" r="6"/>${v.axles>2||v.category==='tractor'?`<circle cx="${rear+9}" cy="38" r="6"/>`:''}</g></svg>`;}
 function renderGarage(){
@@ -116,7 +117,19 @@ function renderGarage(){
  document.querySelectorAll('[data-preview]').forEach(button=>button.onclick=()=>{previewId=button.dataset.preview;previewBody=save.fleet[previewId]?.body||VEHICLES.find(v=>v.id===previewId).defaultBody;paintChoice=null;renderGarage();updateGaragePreview(true);});
  renderGarageDetails();
 }
-function refreshGarage(){persist();renderGarage();updateGaragePreview();}
+// Compras e serviços são aplicados primeiro em uma cópia; só entram na carreira após gravação.
+function refreshGarage(){renderGarage();updateGaragePreview();}
+function commitGarage(action){
+ const result=commitGarageMutation(save,action,localStorage);
+ if(!result.ok){
+  toast(result.reason==='storage'?'Armazenamento indisponível. Nenhum crédito foi descontado.':'Não foi possível concluir o serviço.');
+  return false;
+ }
+ save=result.save;$('balance').textContent=money(save.money);
+ refreshGarage();return true;
+}
+function syncGarageCameraButtons(){document.querySelectorAll('[data-camera-view]').forEach(button=>button.setAttribute('aria-pressed',String(!previewSpin&&Math.abs(previewAngle-Number(button.dataset.cameraView))<.025)));}
+
 function renderGarageDetails(){
  const selection=garageSelection(save,previewId,previewBody),{vehicle:v,truck,owned,equipped,canBuy,reason}=selection,using=VEHICLES.find(item=>item.id===save.selected),usingParts=save.fleet[save.selected],top=v.max+(truck?.engine||0)*12,usingTop=using.max+usingParts.engine*12;
  const delta=(n,unit)=>n===0?'igual ao equipado':(n>0?'+':'')+n+' '+unit+' vs. equipado';
@@ -126,20 +139,21 @@ function renderGarageDetails(){
  let actions='';
  if(garageTab==='workshop'&&owned){const repair=repairCost(truck);actions=`<h3>MANUTENÇÃO · ${Math.round(truck.health)}% DE INTEGRIDADE</h3><div class="service-list"><div class="service"><div><span>Reparação</span><b>${money(repair)}</b></div><small>${repair?'Seu Nilo coloca o caminhão em ordem.':'Tudo em dia para a próxima viagem.'}</small><button id="repairTruck" ${repair===0||save.money<repair?'disabled':''}>REPARAR CAMINHÃO</button></div>${['engine','brakes'].map(type=>{const cost=upgradeCost(truck,type);return `<div class="service"><div><span>${type==='engine'?'Motor':'Freios'} · nível ${truck[type]}</span><b>${cost===null?'MÁXIMO':money(cost)}</b></div><small>${type==='engine'?'Mais aceleração e velocidade final.':'Menor distância de parada.'}</small><button data-service="${type}" ${cost===null||save.money<cost?'disabled':''}>INSTALAR MELHORIA</button></div>`;}).join('')}</div><h3>PINTURA DA CABINE · PRÉVIA</h3><div class="paint-swatches">${PAINTS.map((color,i)=>`<button aria-label="Prévia da pintura ${['âmbar','verde','vermelha','marfim','azul'][i]}" data-paint="${color}" class="${(paintChoice||truck.color)===color?'selected':''}" style="background:${color}"></button>`).join('')}</div><button class="outline" id="applyPaint" ${!paintChoice||paintChoice===truck.color||save.money<300?'disabled':''}>APLICAR PINTURA · CR$ 300</button><p class="workshop-note">Peças, pintura e carroceria ficam neste caminhão. Escolher uma cor mostra apenas a prévia.</p>`;}
  else actions=owned?`<button class="primary" id="useTruck" ${equipped?'disabled':''}>${equipped?'● CAMINHÃO EM USO':'USAR ESTE CAMINHÃO ↗'}</button><button class="outline" id="openWorkshop">PERSONALIZAR NA OFICINA ↗</button><p class="disabled-note">Integridade: ${Math.round(truck.health)}% · Motor N${truck.engine} · Freios N${truck.brakes}</p>`:`<div class="garage-price"><small>VALOR DO CONJUNTO</small>${money(v.price)}</div><button class="primary" id="buyTruck" ${canBuy?'':'disabled'}>COMPRAR E USAR ↗</button><p class="disabled-note">${reason||'Inclui a carroceria padrão. O caminhão atual permanece na frota.'}</p>`;
- $('garageDetails').innerHTML=`<span class="eyebrow">${v.category==='tractor'?'CAVALO MECÂNICO + CARRETA':'CAMINHÃO RÍGIDO'}</span><h2>${v.name}</h2><p class="garage-description">${v.description}</p><div class="truck-data"><div><span>CAPACIDADE</span><b>${v.capacity} <small>t</small></b></div><div><span>VELOCIDADE</span><b>${top} <small>km/h</small></b></div><div><span>COMPRIMENTO</span><b>${v.length} <small>m</small></b></div><div><span>EIXOS NO CONJUNTO</span><b>${v.totalAxles}</b></div></div>${garageTab==='workshop'?'':comparison}${bodyControl}${garageTab==='workshop'?`<details class="workshop-services" ${serviceOpen?'open':''}><summary>MECÂNICA E PINTURA</summary>${actions}</details>`:actions}${garageTab==='store'||owned&&garageTab==='workshop'?decorationControls():''}`;
+ const workshopOverview=garageTab==='workshop'&&owned?`<div class="workshop-overview"><strong>DIAGNÓSTICO DA OFICINA</strong><span>Condição do caminhão: <b>${Math.round(truck.health)}%</b> · Motor N${truck.engine} · Freios N${truck.brakes}</span><small>Escolha um serviço, veja a prévia e confirme apenas quando estiver satisfeito.</small></div>`:'';
+ $('garageDetails').innerHTML=`<span class="eyebrow">${v.category==='tractor'?'CAVALO MECÂNICO + CARRETA':'CAMINHÃO RÍGIDO'}</span><h2>${v.name}</h2><p class="garage-description">${v.description}</p><div class="truck-data"><div><span>CAPACIDADE</span><b>${v.capacity} <small>t</small></b></div><div><span>VELOCIDADE</span><b>${top} <small>km/h</small></b></div><div><span>COMPRIMENTO</span><b>${v.length} <small>m</small></b></div><div><span>EIXOS NO CONJUNTO</span><b>${v.totalAxles}</b></div></div>${garageTab==='workshop'?'':comparison}${workshopOverview}${bodyControl}${garageTab==='workshop'?`<details class="workshop-services" ${serviceOpen?'open':''}><summary>MECÂNICA E PINTURA</summary>${actions}</details>`:actions}${garageTab==='store'||owned&&garageTab==='workshop'?decorationControls():''}`;
  if(document.querySelector('.workshop-services'))document.querySelector('.workshop-services').ontoggle=e=>serviceOpen=e.currentTarget.open;
  bindDecorationControls();
  $('bodyPreview').onchange=e=>{previewBody=e.target.value;updateGaragePreview();};
- if($('installBody'))$('installBody').onclick=()=>{if(equipBody(save,previewBody,previewId)){refreshGarage();toast('Carroceria instalada no '+v.name+'.');}};
- if($('useTruck'))$('useTruck').onclick=()=>{if(!save.fleet[previewId])return;save.selected=previewId;refreshGarage();toast(v.name+' pronto para a estrada.');};
- if($('buyTruck'))$('buyTruck').onclick=()=>{if(purchase(save,previewId)){previewBody=save.fleet[previewId].body;refreshGarage();toast(v.name+' adicionado à sua frota.');}};
- if($('openWorkshop'))$('openWorkshop').onclick=()=>{garageTab='workshop';paintChoice=null;renderGarage();updateGaragePreview();};
- if($('repairTruck'))$('repairTruck').onclick=()=>{if(repairTruck(save,previewId)){refreshGarage();toast('Reparação concluída.');}};
- document.querySelectorAll('[data-service]').forEach(button=>button.onclick=()=>{if(installUpgrade(save,previewId,button.dataset.service)){refreshGarage();toast('Melhoria instalada no '+v.name+'.');}});
+ if($('installBody'))$('installBody').onclick=()=>{if(commitGarage(draft=>equipBody(draft,previewBody,previewId)))toast('Carroceria instalada no '+v.name+'.');};
+ if($('useTruck'))$('useTruck').onclick=()=>{if(commitGarage(draft=>{if(!draft.fleet[previewId])return false;draft.selected=previewId;return true;}))toast(v.name+' pronto para a estrada.');};
+ if($('buyTruck'))$('buyTruck').onclick=()=>{if(commitGarage(draft=>purchase(draft,previewId))){previewBody=save.fleet[previewId].body;toast(v.name+' adicionado à sua frota.');}};
+ if($('openWorkshop'))$('openWorkshop').onclick=()=>{garageTab='workshop';serviceOpen=true;paintChoice=null;renderGarage();updateGaragePreview();};
+ if($('repairTruck'))$('repairTruck').onclick=()=>{if(commitGarage(draft=>repairTruck(draft,previewId)))toast('Reparação concluída.');};
+ document.querySelectorAll('[data-service]').forEach(button=>button.onclick=()=>{if(commitGarage(draft=>installUpgrade(draft,previewId,button.dataset.service)))toast('Melhoria instalada no '+v.name+'.');});
  document.querySelectorAll('[data-paint]').forEach(button=>button.onclick=()=>{paintChoice=button.dataset.paint;player.userData.paint.color.set(paintChoice);renderer.colors?.delete(player.userData.paint);renderGarageDetails();});
- if($('applyPaint'))$('applyPaint').onclick=()=>{if(repaintTruck(save,previewId,paintChoice)){paintChoice=null;refreshGarage();toast('Pintura aplicada no '+v.name+'.');}};
+ if($('applyPaint'))$('applyPaint').onclick=()=>{if(commitGarage(draft=>repaintTruck(draft,previewId,paintChoice))){paintChoice=null;updateGaragePreview();toast('Pintura aplicada no '+v.name+'.');}};
 }
-let workshopPanel='parts',partGroup='Todas',serviceOpen=false;
+let workshopPanel='parts',partGroup='Todas',serviceOpen=true;
 function checkoutUI(){if(!$('applyDecoration'))return;const q=quoteParts(save,previewId,draftDecoration),button=$('applyDecoration');button.disabled=!q.valid||!!q.reason;button.textContent=!q.valid?'ADQUIRA O CAMINHÃO PARA EQUIPAR':q.cost?'COMPRAR E EQUIPAR · '+money(q.cost):'EQUIPAR PEÇAS ADQUIRIDAS';$('checkoutCost').textContent=q.valid?(q.items.length+' nova(s) peça(s) · '+money(q.cost)):'Prévia de caminhão da loja';$('checkoutNote').textContent=q.reason||'Peças adquiridas continuam neste caminhão mesmo quando removidas.';}
 function decorationControls(){const d=draftDecoration,owned=ownedParts(save.fleet[previewId]);return `<section class="deko"><div class="workshop-nav" aria-label="Personalização">${[['parts','PEÇAS · 48'],['art','ARTE'],['lights','LUZES']].map(([id,label])=>`<button data-workshop-panel="${id}" aria-pressed="${workshopPanel===id}">${label}</button>`).join('')}</div><div class="checkout-summary"><b id="checkoutCost"></b><p id="checkoutNote"></p></div>
 <div data-workshop-content="parts"><h3>CATÁLOGO DE PEÇAS</h3><p class="workshop-note">Escolha uma versão para ver no caminhão. Comprar e equipar confirma o valor total.</p><div class="part-groups">${['Todas','Cabine','Carroceria','Rodas','Luzes'].map(g=>`<button data-part-group="${g}" aria-pressed="${partGroup===g}">${g}</button>`).join('')}</div><div class="accessory-options">${Object.entries(ACCESSORIES).map(([key,label])=>`<article class="part-card" data-part-card="${PARTS[key][0].group}"><label class="deko-check"><input type="checkbox" data-accessory="${key}" ${d.accessories[key]?'checked':''}>${label}</label><select data-part-version="${key}" aria-label="Versão de ${label}">${PARTS[key].map(v=>`<option value="${v.id}" ${d.variants[key]===v.id?'selected':''}>${v.name} · ${owned.includes(key+':'+v.id)?'ADQUIRIDA':money(v.price)}</option>`).join('')}</select><small>${PARTS[key][0].group} · Ajustada à cabine e ao chassi</small></article>`).join('')}</div><button class="outline" id="dekoFullPreview">EXPERIMENTAR CONJUNTO COMPLETO</button><label>TEXTO DO LETREIRO<input id="dekoSignText" maxlength="24" value="${d.signText.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="Nome do caminhão"></label></div>
@@ -150,7 +164,7 @@ function workshopTabs(){document.querySelectorAll('[data-workshop-content]').for
 function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorationEpoch,redraw=()=>{renderer.colors?.clear();decorateTruck(player,draftDecoration);checkoutUI();$('decorationStatus').textContent='Alterações na prévia. Salve para equipar neste caminhão.';},setArt=(id,side=$('artTarget').value)=>{if(side==='both'){draftDecoration.left=id;draftDecoration.right=id;}else draftDecoration[side]=id;redraw();$('decorationStatus').textContent='Prévia atualizada. Clique em Salvar personalização para equipar.';};
  checkoutUI();workshopTabs();document.querySelectorAll('[data-workshop-panel]').forEach(b=>b.onclick=()=>{workshopPanel=b.dataset.workshopPanel;workshopTabs();});document.querySelectorAll('[data-part-group]').forEach(b=>b.onclick=()=>{partGroup=b.dataset.partGroup;workshopTabs();});document.querySelectorAll('[data-part-version]').forEach(select=>select.onchange=()=>{const key=select.dataset.partVersion;draftDecoration.variants[key]=Number(select.value);draftDecoration.accessories[key]=true;document.querySelector('[data-accessory="'+key+'"]').checked=true;redraw();});$('discardPreview').onclick=()=>{draftDecoration=normalizeDecoration(save.fleet[previewId]?.decoration);updateGaragePreview();toast('Prévia descartada.');};
  $('artPreset').value=Object.hasOwn(PRESETS,draftDecoration.left)?draftDecoration.left:'none';
- $('dekoFullPreview').onclick=()=>{draftDecoration=normalizeDecoration({...draftDecoration,accessories:Object.fromEntries(Object.keys(ACCESSORIES).map(id=>[id,true])),lights:true,left:'serra',right:'serra'});updateGaragePreview();};
+ $('dekoFullPreview').onclick=()=>{draftDecoration=normalizeDecoration({...draftDecoration,accessories:Object.fromEntries(Object.keys(ACCESSORIES).map(id=>[id,true])),lights:true,left:'serra',right:'serra'});decorateTruck(player,draftDecoration);renderGarageDetails();};
  $('dekoPattern').value=draftDecoration.pattern;$('dekoPalette').value=draftDecoration.palette;
  $('previewArt').onclick=()=>setArt($('artPreset').value);
  $('artFile').onchange=async e=>{const id=previewId,side=$('artTarget').value,file=e.target.files[0];if(!file)return;const input=e.target;input.disabled=true;try{const art=await importArt(file);if(id!==previewId||mode!=='garage'||epoch!==decorationEpoch)return;setArt(art,side);toast('Imagem pronta na prévia. Salve para equipar.');}catch(error){toast(error.message);}finally{input.disabled=false;}};
@@ -159,7 +173,7 @@ function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorati
  document.querySelectorAll('[data-accessory]').forEach(input=>input.onchange=()=>{draftDecoration.accessories[input.dataset.accessory]=input.checked;redraw();$('decorationStatus').textContent='Peças na prévia. Salve para equipar neste caminhão.';});
  $('dekoSignText').oninput=e=>{draftDecoration.signText=normalizeDecoration({signText:e.target.value}).signText;redraw();};
 
- $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;if(saveDecoration(save,previewId,draftDecoration)){if(!persist()){$('decorationStatus').textContent='Não foi possível gravar. Libere espaço e tente salvar novamente.';return;}$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');renderGarageDetails();}else{toast(quoteParts(save,previewId,draftDecoration).reason||'Não foi possível equipar.');}};
+ $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;const quote=quoteParts(save,previewId,draftDecoration);if(!quote.valid||quote.reason){toast(quote.reason||'Não foi possível equipar.');return;}if(commitGarage(draft=>saveDecoration(draft,previewId,draftDecoration))){$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');}};
 }
 window.addEventListener('art-error',event=>toast(event.detail));
 function persist(){try{localStorage.setItem('carga-pesada-v1',JSON.stringify(save));}catch{if(!saveWarned){toast('Não foi possível salvar neste navegador.');saveWarned=true;}return false;}$('balance').textContent=money(save.money);return true;}
@@ -321,8 +335,17 @@ $('continue').onclick=()=>brief(CONTRACTS.find(c=>c.id===nextMission(save))||CON
  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>showPage(button.dataset.page));
  document.querySelectorAll('[data-menu-panel]').forEach(button=>button.onclick=()=>showMenuPanel(button.dataset.menuPanel));
  $('closeMenuPanel').onclick=closeMenuPanel;
- document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;paintChoice=null;renderGarage();updateGaragePreview(true);});
- $('previewZoom').oninput=e=>previewDistance=Number(e.target.value);$('rotateLeft').onclick=()=>{previewSpin=false;previewAngle-=.35;};$('rotateRight').onclick=()=>{previewSpin=false;previewAngle+=.35;};$('spinModel').onclick=()=>{previewSpin=!previewSpin;$('spinModel').setAttribute('aria-pressed',previewSpin?'true':'false');};
+ document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;if(garageTab==='workshop')serviceOpen=true;paintChoice=null;renderGarage();updateGaragePreview(true);});
+ $('previewZoom').oninput=e=>previewDistance=Number(e.target.value);
+ $('rotateLeft').onclick=()=>{previewSpin=false;previewAngle-=.35;syncGarageCameraButtons();};
+ $('rotateRight').onclick=()=>{previewSpin=false;previewAngle+=.35;syncGarageCameraButtons();};
+ $('spinModel').onclick=()=>{previewSpin=!previewSpin;$('spinModel').setAttribute('aria-pressed',previewSpin?'true':'false');syncGarageCameraButtons();};
+ document.querySelectorAll('[data-camera-view]').forEach(button=>button.onclick=()=>{previewSpin=false;previewAngle=Number(button.dataset.cameraView);$('spinModel').setAttribute('aria-pressed','false');syncGarageCameraButtons();});
+ const garageStage=$('garageStage');let garageDrag=null;
+ garageStage.addEventListener('pointerdown',event=>{if(mode!=='garage'||event.target.closest('button,label,input'))return;garageDrag={id:event.pointerId,x:event.clientX,angle:previewAngle};garageStage.setPointerCapture?.(event.pointerId);});
+ garageStage.addEventListener('pointermove',event=>{if(!garageDrag||event.pointerId!==garageDrag.id)return;previewSpin=false;previewAngle=garageDrag.angle+(garageDrag.x-event.clientX)*.009;$('spinModel').setAttribute('aria-pressed','false');syncGarageCameraButtons();});
+ const finishGarageDrag=event=>{if(garageDrag?.id===event.pointerId)garageDrag=null;};
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])garageStage.addEventListener(type,finishGarageDrag);
  for(const [id,set] of [['chapterFilter',v=>chapterFilter=v],['timeFilter',v=>timeFilter=v],['statusFilter',v=>statusFilter=v]])$(id).onchange=e=>{set(e.target.value);renderHome();};
 
  $('helpBtn').onclick=()=>$('help').classList.remove('hidden');$('closeHelp').onclick=$('helpOk').onclick=()=>$('help').classList.add('hidden');$('pauseBtn').onclick=pause;$('resume').onclick=resume;$('abandon').onclick=()=>{save.fleet[save.selected].health=Math.max(15,run.health);persist();home();};
