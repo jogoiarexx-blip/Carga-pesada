@@ -1,5 +1,6 @@
 // REV30: ornamentos Dekotora geometria estática, sem luzes dinâmicas.
 import * as THREE from './vendor/three.module.js';
+import {planDekotoraFit} from './dekotora-fit-rev31.mjs';
 export function addDekotoraRev30({model,group,root,config,fit,type,box,bar,materials,setCategory}){
  const {cab:c,body:b,layout:l,offset}=fit,a=config.accessories,front=l.front;
  const {chrome,dark,edge,glow,lamp,red}=materials;
@@ -39,10 +40,13 @@ export function addDekotoraRev30({model,group,root,config,fit,type,box,bar,mater
   for(const side of [-1,1])put('frontGarnish',root,'canto externo da máscara',.08,.26,.10,chrome,side*(half-.08),y,z-.075);
  }
  if(a.cabTopper){
-  const lv=type('cabTopper'),w=c.width-.13,z=front+c.roofZ-c.roofDepth/2+.43,y=c.roof+.23;
+  const lv=type('cabTopper'),w=c.width-.13,roof=planDekotoraFit(fit,a).roof,z=roof.topperZ,y=roof.topperY;
   put('cabTopper',root,'base da coroa de cabine',w,.13,.36,chrome,0,y,z);
   put('cabTopper',root,'fundo da coroa de cabine',w-.13,.10,.38,dark,0,y+.12,z-.02);
-  for(const side of [-1,1])put('cabTopper',root,'suporte da coroa',.075,.24,.16,edge,side*(w/2-.075),y+.12,z);
+  for(const side of [-1,1]){
+   put('cabTopper',root,'suporte da coroa',.075,.24,.16,edge,side*(w/2-.075),y+.12,z);
+   if(roof.topperLift>0)put('cabTopper',root,'coluna do suporte de teto',.085,roof.topperLift+.15,.14,edge,side*(w/2-.075),c.roof+.16+roof.topperLift/2,z);
+  }
   if(lv===1){
    stripe('cabTopper',root,'varão inox da coroa',[-w*.45,y+.25,z-.20],[w*.45,y+.25,z-.20],.034);
    for(let i=-2;i<=2;i++)put('cabTopper',root,'marcador âmbar da coroa',.12,.06,.037,lamp,i*w*.17,y+.20,z-.21);
