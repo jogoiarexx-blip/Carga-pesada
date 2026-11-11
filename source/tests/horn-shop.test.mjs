@@ -57,7 +57,7 @@ test('UI de buzinas tem ouvir e botão de compra e não bloqueia prévia',()=>{
  assert.match(html,/LOJINHA DE BUZINAS/);
  assert.match(html,/▶ OUVIR/);
  assert.match(html,/EQUIPADA/);
- assert.match(html,/pt/);
+ assert.match(html,/voz em português/);
 });
 test('buzina original continua gravada; alternativas não exigem internet',()=>{
  let factory=0,calls=0,utterances=[];
