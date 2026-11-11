@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {variantOf} from './parts-catalog.mjs';
 import {truckFit} from './truck-fit.mjs';
 import {planSideSkirts} from './side-skirts.mjs';
+import {addArtTruckDetails} from './art-truck-details.mjs';
 import {bevelBox} from './truck-geometry.mjs';
 import {mergeStatic} from './truck-model.mjs';
 export function addAccessories(model,group,config){
@@ -101,6 +102,7 @@ export function addAccessories(model,group,config){
  if(key==='cabSign'&&level===3)box(root,'base letreiro dupla',c.width*.79,.06,.15,edge,0,c.roof+.39,front+c.roofZ-c.roofDepth/2-.04);
  const finish=new THREE.MeshStandardMaterial({color:key==='skirts'&&level===2?'#415c6b':level===2?'#9bafb7':'#d9dfe1',metalness:level===2?.45:.9,roughness:level===2?.38:.22});let used=false;for(const parent of [root,group,...group.userData.wheelAccessories])parent.traverse(o=>{if(o.isMesh&&o.userData.category===key&&o.material===chrome){o.material=finish;used=true;}});if(!used)finish.dispose();
  }
+ addArtTruckDetails({model,group,root,config,fit:{cab:c,body:b,layout:l,offset},type,box,rod,bar,materials:{chrome,dark,edge,glow,lamp,red},setCategory:key=>{activeCategory=key;}});
  for(const m of [chrome,dark,edge,glow,lamp,red]){let used=false;for(const parent of [root,group,...group.userData.wheelAccessories])parent.traverse(o=>{if(o.material===m)used=true;});if(!used)m.dispose();}
  for(const parent of [root,group,...group.userData.wheelAccessories])mergeStatic(parent,true);return root;
 }
