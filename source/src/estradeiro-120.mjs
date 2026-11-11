@@ -1,15 +1,15 @@
 import * as THREE from './vendor/three.module.js';
 
 // Estradeiro 120: caminhão rígido médio com cabine mais realista e acabamento utilitário.
-export function buildEstradeiroCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}){
- const seal=new THREE.MeshStandardMaterial({color:'#10181c',roughness:.84});
- const grille=new THREE.MeshStandardMaterial({color:'#314448',metalness:.22,roughness:.67});
- const bodyShadow=new THREE.MeshStandardMaterial({color:'#2e555d',metalness:.12,roughness:.58});
- const steel=new THREE.MeshStandardMaterial({color:'#909894',metalness:.55,roughness:.37});
- const darkGlass=new THREE.MeshPhysicalMaterial({color:'#7998a2',metalness:.08,roughness:.2,transparent:true,opacity:.92,clearcoat:.4});
- const indicator=new THREE.MeshStandardMaterial({color:'#dca24d',metalness:.08,roughness:.45});
- const trim=new THREE.MeshStandardMaterial({color:'#1e2b2f',roughness:.72});
- const tireTrim=new THREE.MeshStandardMaterial({color:'#171d20',roughness:.88});
+export function buildEstradeiroCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}){
+ const seal=finish({color:'#10181c',roughness:.84});
+ const grille=finish({color:'#314448',metalness:.22,roughness:.67});
+ const bodyShadow=finish({color:'#2e555d',metalness:.12,roughness:.58});
+ const steel=finish({color:'#909894',metalness:.55,roughness:.37});
+ const darkGlass=finish({color:'#7998a2',metalness:.08,roughness:.2,transparent:true,opacity:.92,clearcoat:.4});
+ const indicator=finish({color:'#dca24d',metalness:.08,roughness:.45});
+ const trim=finish({color:'#1e2b2f',roughness:.72});
+ const tireTrim=finish({color:'#171d20',roughness:.88});
 
  // Cabine principal: frente curta e mais alta, com teto reto e recuos de porta.
  profile(cab,[[.11,.98],[.11,2.62],[.42,3.02],[.78,3.18],[2.35,3.18],[2.70,2.94],[2.76,2.42],[2.76,.98],[2.26,.98],[2.12,1.16],[1.84,1.28],[1.28,1.32],[.92,1.28],[.72,1.16],[.58,.98]],2.34,paint,'Estradeiro 120 — cabine regional');
@@ -80,13 +80,13 @@ export function buildEstradeiroCab({cab,box,profile,rod,paint,chrome,black,glass
  }
 }
 
-export function detailEstradeiroChassis({root,wheels,layout,box}){
- const wheelSteel=new THREE.MeshStandardMaterial({color:'#aab3ae',metalness:.66,roughness:.31});
- const wheelShadow=new THREE.MeshStandardMaterial({color:'#141c1f',roughness:.78});
- const rubber=new THREE.MeshStandardMaterial({color:'#202727',roughness:.94});
- const frame=new THREE.MeshStandardMaterial({color:'#657378',metalness:.42,roughness:.6});
- const amber=new THREE.MeshStandardMaterial({color:'#d59d3d',metalness:.05,roughness:.5});
- const black=new THREE.MeshStandardMaterial({color:'#10171a',roughness:.85});
+export function detailEstradeiroChassis({root,wheels,layout,box,finish}){
+ const wheelSteel=finish({color:'#aab3ae',metalness:.66,roughness:.31});
+ const wheelShadow=finish({color:'#141c1f',roughness:.78});
+ const rubber=finish({color:'#202727',roughness:.94});
+ const frame=finish({color:'#657378',metalness:.42,roughness:.6});
+ const amber=finish({color:'#d59d3d',metalness:.05,roughness:.5});
+ const black=finish({color:'#10171a',roughness:.85});
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
   const ring=new THREE.Mesh(new THREE.TorusGeometry(r*.61,.032,6,18),wheelSteel);ring.rotation.y=Math.PI/2;ring.position.x=side*.205;ring.name='aro estampado do Estradeiro';wheel.add(ring);
