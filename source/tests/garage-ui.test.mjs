@@ -138,3 +138,23 @@ test('lojinha de buzinas integra a personalização e o botão móvel sem bloque
  assert.match(html,/id="touchHorn"/);
  assert.match(css,/REV35 — lojinha de buzinas/);
 });
+
+
+test('buzinas possuem atalho direto na lateral e aparecem no topo da oficina',()=>{
+ assert.match(html,/id="garageHornShortcut"/);
+ assert.match(html,/LOJA DE BUZINAS/);
+ assert.match(code,/function openHornStore\(\)/);
+ assert.match(code,/workshopPanel='horns'/);
+ assert.match(code,/\$\('garageHornShortcut'\)\.onclick=openHornStore/);
+ assert.match(code,/garageTab==='workshop'&&workshopPanel==='horns'&&owned/);
+ assert.match(code,/id="backToGarageServices"/);
+ assert.match(code,/renderHornShop\(save,previewId,money\)/);
+ assert.match(css,/REV36 — Acesso direto às buzinas/);
+});
+test('no notebook os cards não são reduzidos a uma faixa pela altura fixa',()=>{
+ assert.match(css,/\.garage-vehicle-list\{\s*\n\s*flex:none;min-height:0;height:auto;max-height:none/);
+ assert.match(css,/\.garage-screen\{\s*\n\s*height:auto;min-height:calc\(100dvh - 88px\)/);
+ assert.match(css,/\.garage-card\{\s*\n\s*width:100%;box-sizing:border-box/);
+ assert.match(css,/max-width:1160px/);
+ assert.match(css,/\.garage-horn-shortcut\{order:2/);
+});

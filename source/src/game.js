@@ -42,7 +42,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.41';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.42';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -132,6 +132,17 @@ function showPage(page,updateHash=true){
  window.scrollTo({top:0,behavior:'instant'});
 }
 function garage(){showPage('garage');}
+function openHornStore(){
+ garageTab='workshop';
+ workshopPanel='horns';
+ serviceOpen=false;
+ previewId=save.selected;
+ previewBody=save.fleet[previewId].body;
+ paintChoice=null;
+ showPage('garage');
+ const target=$('garageDetails');
+ if(target){target.scrollTop=0;if(innerWidth<=800)target.scrollIntoView({behavior:'smooth',block:'start'});}
+}
 function showroom(id=save.selected){garageTab='store';previewId=id;previewBody=save.fleet[id]?.body||VEHICLES.find(v=>v.id===id).defaultBody;showPage('garage');}
 function updateGaragePreview(reset=false){
  const base=VEHICLES.find(v=>v.id===previewId);if(!base.bodyOptions.includes(previewBody))previewBody=save.fleet[previewId]?.body||base.defaultBody;
@@ -150,6 +161,8 @@ function updateGaragePreview(reset=false){
 function vehicleIcon(v,color){const hood=v.cab==='classic'||v.cab==='aero',rear=v.category==='tractor'?94:88;return `<svg viewBox="0 0 120 50" aria-hidden="true"><path d="M2 41H117" stroke="#a6b294" opacity=".4"/><path d="${hood?'M5 33V24L20 22L25 12H43V35H5Z':'M6 35V15L12 10H33V35Z'}" fill="${color}" stroke="#ced2ab" stroke-width=".7"/><path d="${hood?'M24 22L28 15H38V23Z':'M11 16H27V24H11Z'}" fill="#142c28"/><path d="M${hood?45:36} 14H112V34H${hood?45:36}Z" fill="${v.defaultBody==='tarp_trailer'?'#bb853b':'#a4b5a3'}" stroke="#d4d6bc" stroke-width=".7"/><path d="M44 34H114V38H26V34" fill="#102a24"/><g fill="#10231e" stroke="#b9c2ac" stroke-width="1.2"><circle cx="17" cy="38" r="6"/><circle cx="${rear-5}" cy="38" r="6"/>${v.axles>2||v.category==='tractor'?`<circle cx="${rear+9}" cy="38" r="6"/>`:''}</g></svg>`;}
 function renderGarage(){
  const vehicles=garageTab==='store'?VEHICLES:VEHICLES.filter(v=>save.fleet[v.id]);if(!vehicles.some(v=>v.id===previewId)){previewId=save.selected;previewBody=save.fleet[previewId].body;paintChoice=null;}
+ $('garageHornShortcut').classList.toggle('active',garageTab==='workshop'&&workshopPanel==='horns');
+ $('garageHornShortcut').setAttribute('aria-pressed',String(garageTab==='workshop'&&workshopPanel==='horns'));
  $('fleetCount').textContent=Object.keys(save.fleet).length;$('garageListTitle').textContent=garageTab==='store'?'TODOS OS CAMINHÕES':garageTab==='workshop'?'ESCOLHA PARA PERSONALIZAR':'SEUS COMPANHEIROS';$('garageListCount').textContent=vehicles.length+' MODELO'+(vehicles.length>1?'S':'');
  document.querySelectorAll('[data-garage-tab]').forEach(button=>{button.classList.toggle('active',button.dataset.garageTab===garageTab);button.setAttribute('aria-pressed',button.dataset.garageTab===garageTab?'true':'false');});
  $('fleet').innerHTML=vehicles.map(v=>{const truck=save.fleet[v.id],inUse=save.selected===v.id;return `<button class="garage-card ${v.id===previewId?'active':''}" data-preview="${v.id}" aria-label="Ver ${v.name}" aria-pressed="${v.id===previewId}"><span class="garage-card-art">${vehicleIcon(v,truck?.color||v.color)}</span><span class="garage-card-info"><strong>${v.name}</strong><small>${v.capacity} t · ${v.axles} eixos ${v.category==='tractor'?'+ carreta':''}</small><small class="owned-tag ${inUse?'is-in-use':truck?'is-owned':'is-locked'}">${inUse?'● EM USO':truck?'NA SUA FROTA':money(v.price)}</small></span></button>`;}).join('');
@@ -204,6 +217,18 @@ function renderGarageDetails(){
  const selection=garageSelection(save,previewId,previewBody),{vehicle:v,truck,owned,equipped,canBuy,reason}=selection,using=VEHICLES.find(item=>item.id===save.selected),usingParts=save.fleet[save.selected],top=engineTopSpeed(v,truck?.engine||0),usingTop=engineTopSpeed(using,usingParts.engine);
  const delta=(n,unit)=>n===0?'igual ao equipado':(n>0?'+':'')+n+' '+unit+' vs. equipado';
  $('garageStageTag').textContent=`${equipped?'SEU CAMINHÃO EQUIPADO':owned?'PRÉVIA · CAMINHÃO DA SUA FROTA':'PRÉVIA GRATUITA · AINDA NÃO ADQUIRIDO'}`;
+ // A lojinha é uma página própria no painel: não fica escondida após 6 motores e outros serviços.
+ if(garageTab==='workshop'&&workshopPanel==='horns'&&owned){
+  $('garageDetails').innerHTML=
+   '<div class="garage-horns-top"><button id="backToGarageServices" type="button">‹ OUTROS SERVIÇOS</button>'+
+   '<span class="eyebrow">PERSONALIZAÇÃO SONORA</span><h2>LOJA DE BUZINAS</h2>'+
+   '<p class="garage-description">Escolha o toque do '+v.name+'. Ouça antes de comprar; as buzinas já adquiridas continuam disponíveis neste caminhão.</p></div>'+
+   renderHornShop(save,previewId,money);
+  $('backToGarageServices').onclick=()=>{workshopPanel='parts';renderGarage();$('garageDetails').scrollTop=0;};
+  bindHornControls();
+  return;
+ }
+
  const comparison=`<section class="garage-compare-section" aria-label="Comparação com o caminhão equipado"><h3 class="garage-section-title">COMPARAR COM ${using.name.toUpperCase()}</h3><div class="garage-compare-panel"><div class="compare-row"><span class="compare-label">${garageDetailIcon('capacity')}Capacidade</span><em class="${v.capacity>using.capacity?'positive':''}">${delta(v.capacity-using.capacity,'t')}</em></div><div class="compare-row"><span class="compare-label">${garageDetailIcon('speed')}Velocidade</span><em class="${top>usingTop?'positive':''}">${delta(top-usingTop,'km/h')}</em></div></div></section>`;
  const bodyControl=`<section class="garage-body-section"><h3 class="garage-section-title" id="garageBodyLabel">${garageTab==='workshop'?'CARROCERIA · PRÉVIA':'CONFIGURAÇÃO DA PRÉVIA'}</h3><div class="garage-select-wrap"><span class="garage-select-icon">${garageDetailIcon('body')}</span><select id="bodyPreview" aria-labelledby="garageBodyLabel" aria-label="Carroceria na garagem">${v.bodyOptions.map(id=>`<option value="${id}" ${id===v.body?'selected':''}>${BODY_TYPES[id].name}</option>`).join('')}</select><span class="garage-select-chevron" aria-hidden="true">⌄</span></div>${owned&&v.body!==truck.body?`<button class="outline body-install" id="installBody" ${save.money<800?'disabled':''}>INSTALAR CARROCERIA · CR$ 800</button><p class="workshop-note">A troca será aplicada ao ${v.name}.</p>`:''}</section>`;
  let actions='';
@@ -439,7 +464,8 @@ $('continue').onclick=()=>brief(CONTRACTS.find(c=>c.id===nextMission(save))||CON
  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>showPage(button.dataset.page));
  document.querySelectorAll('[data-menu-panel]').forEach(button=>button.onclick=()=>showMenuPanel(button.dataset.menuPanel));
  $('closeMenuPanel').onclick=closeMenuPanel;
- document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;if(garageTab==='workshop')serviceOpen=true;paintChoice=null;renderGarage();updateGaragePreview(true);});
+ document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;if(garageTab==='workshop'){serviceOpen=true;workshopPanel='parts';}paintChoice=null;renderGarage();updateGaragePreview(true);});
+ $('garageHornShortcut').onclick=openHornStore;
  $('previewZoom').oninput=e=>previewDistance=Number(e.target.value);
  $('fitModel').onclick=()=>{previewSpin=false;$('spinModel').setAttribute('aria-pressed','false');fitWorkshopPreview();syncGarageCameraButtons();};
  $('rotateLeft').onclick=()=>{previewSpin=false;previewAngle-=.35;syncGarageCameraButtons();};
