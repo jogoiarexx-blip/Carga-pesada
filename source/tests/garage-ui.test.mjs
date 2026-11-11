@@ -69,3 +69,22 @@ test('prévia aplica iluminação da oficina e restaura a estrada ao trocar modo
  assert.match(code,/applyGraphicsQuality\(\);applyLighting\(\);/);
  assert.match(css,/body\[data-screen="garage"\] #garageBackdrop\{background:#182e27!important\}/);
 });
+
+
+test('menu lateral premium mantém tabs e seleção acessíveis',()=>{
+ for(const tab of ['fleet','store','workshop'])assert.match(html,new RegExp('data-garage-tab="'+tab+'"'));
+ for(const cls of ['garage-tab-icon','garage-tab-label','garage-tab-chevron','garage-tab-count','garage-card-art','garage-card-info'])
+  assert.ok(html.includes('class="'+cls+'"')||code.includes('class="'+cls+'')||code.includes('class="owned-tag'),cls);
+ assert.match(html,/id="fleetCount"/);
+ assert.match(code,/button\.setAttribute\('aria-pressed',button\.dataset\.garageTab/);
+ assert.match(code,/data-preview="\$\{v\.id\}"/);
+ assert.match(code,/owned-tag \$\{inUse\?'is-in-use'/);
+});
+test('sidebar adaptativa mantém prévia 3D e navegação mobile',()=>{
+ assert.match(css,/REV26 · Menu da Oficina Farol/);
+ assert.match(css,/\.garage-tab-icon svg\{/);
+ assert.match(css,/\.garage-card-art\{/);
+ assert.match(css,/\.garage-tab-count,body\[data-screen="garage"\] \.garage-tab-chevron\{display:none!important\}/);
+ assert.match(css,/\.garage-stage\{order:4\}/);
+ assert.match(html,/data-page="home" type="button"/);
+});
