@@ -35,6 +35,7 @@ let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
 let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.30';}
+let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
 applyGraphicsQuality();renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
@@ -44,7 +45,6 @@ const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,f
 function box(w,h,d,m,parent,x=0,y=0,z=0){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),typeof m==='string'?mat(m):m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
 const skyImages={};const skyLoader=new THREE.TextureLoader();for(const region of ['vale','porto','ipes','circuito'])for(const time of ['dia','noite'])skyImages[region+'-'+time]=skyLoader.load(new URL('assets/fundo-'+region+'-'+time+'.svg',document.baseURI).href);
 let activeRoute=ROUTES.ipes;
-let workshopScene=null;
 function configureWorkshopScene(visible){
  if(visible&&!workshopScene){workshopScene=createWorkshopScene();workshopScene.position.copy(point(22,-3.4));scene.add(workshopScene);setWorkshopQuality(workshopScene,graphicsQuality);}
  if(workshopScene)workshopScene.visible=visible;
