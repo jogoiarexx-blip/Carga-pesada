@@ -22,3 +22,16 @@ test('serviços desconhecidos não criam ponto de efeito',()=>{
  assert.equal(workshopServiceAnchor(VEHICLES[0],'invalid'),null);
  assert.equal(workshopServiceAnchor(null,'repair'),null);
 });
+
+test('os seis modelos aceitam inspeção em ambos os lados sem deslocar eixos',()=>{
+ for(const vehicle of VEHICLES)for(const body of vehicle.bodyOptions){
+  const v=configuredVehicle(vehicle,body);
+  for(const service of WORKSHOP_SERVICES){
+   const right=workshopServiceAnchor(v,service,1),left=workshopServiceAnchor(v,service,-1);
+   assert.ok(right.x>0&&left.x<0,vehicle.id+' '+service);
+   assert.equal(right.x,-left.x);
+   assert.equal(right.z,left.z);
+   assert.equal(right.y,left.y);
+  }
+ }
+});

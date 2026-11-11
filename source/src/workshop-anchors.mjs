@@ -1,7 +1,7 @@
 import {configuredVehicle,vehicleLayout} from './fleet.mjs';
 // Posições por modelo e carroceria, em coordenadas locais do caminhão.
 export const WORKSHOP_SERVICES=Object.freeze(['repair','engine','brakes','body','paint','parts']);
-export function workshopServiceAnchor(vehicle,type){
+export function workshopServiceAnchor(vehicle,type,side=1){
  if(!vehicle||!WORKSHOP_SERVICES.includes(type))return null;
  const v=configuredVehicle(vehicle,vehicle.body),layout=vehicleLayout(v);
  const hood=['classic','aero'].includes(v.cab),front=layout.front;
@@ -15,5 +15,6 @@ export function workshopServiceAnchor(vehicle,type){
   paint:{x:-1.95,y:2.45,z:cabZ},
   parts:{x:-1.92,y:2.5,z:front+(hood?3:1.55)}
  };
- return {...points[type],z:Math.max(front+.45,Math.min(layout.rear-.35,points[type].z)),type};
+ const direction=side<0?-1:1;
+ return {...points[type],x:Math.abs(points[type].x)*direction,side:direction,z:Math.max(front+.45,Math.min(layout.rear-.35,points[type].z)),type};
 }

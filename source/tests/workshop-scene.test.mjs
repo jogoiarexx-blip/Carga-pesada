@@ -101,3 +101,43 @@ test('oficina impede animação sem veículo de contexto',()=>{
  configureWorkshopVehicle(scene,VEHICLES[0]);
  assert.equal(beginWorkshopService(scene,'paint'),true);
 });
+
+test('serviço abre no lado visível da câmera, com ferramenta e pulverização espelhadas',()=>{
+ const scene=createWorkshopScene();
+ configureWorkshopVehicle(scene,VEHICLES.find(v=>v.id==='peregrino'));
+ assert.equal(beginWorkshopService(scene,'brakes',{side:1}),true);
+ const right=scene.userData.service.point;
+ assert.ok(right.x>0);
+ assert.ok(scene.userData.serviceTool.position.x>right.x);
+ assert.ok(scene.userData.serviceTrolley.position.x>right.x);
+ assert.equal(scene.userData.serviceMist.visible,false);
+ assert.equal(beginWorkshopService(scene,'paint',{side:-1}),true);
+ const left=scene.userData.service.point;
+ assert.ok(left.x<0);
+ assert.ok(scene.userData.serviceSpray.position.x<left.x);
+ assert.equal(scene.userData.serviceSpray.rotation.z,-Math.PI/2);
+ assert.equal(scene.userData.serviceMist.visible,true);
+ assert.equal(scene.userData.serviceTool.visible,false);
+ assert.ok(scene.userData.serviceSpray.material.transparent);
+ assert.equal(scene.userData.serviceSpray.material.depthWrite,false);
+ assert.equal(scene.userData.serviceMist.children.length,7);
+});
+test('iluminação de serviço permanece desligada em eco e não acumula luzes dinâmicas',()=>{
+ const scene=createWorkshopScene();
+ configureWorkshopVehicle(scene,VEHICLES[0]);
+ setWorkshopQuality(scene,'balanced');
+ assert.equal(scene.userData.serviceLight.visible,false);
+ assert.equal(beginWorkshopService(scene,'engine',{side:1}),true);
+ assert.equal(scene.userData.serviceLight.visible,true);
+ let lamps=0;scene.traverse(o=>{if(o.isLight)lamps++;});
+ assert.equal(lamps,1);
+ setWorkshopQuality(scene,'eco');
+ assert.equal(scene.userData.serviceLight.visible,false);
+ assert.equal(scene.userData.serviceMist.visible,false);
+ setWorkshopQuality(scene,'high');
+ assert.equal(scene.userData.serviceLight.visible,true);
+ for(let i=0;i<40;i++)updateWorkshopService(scene,.1);
+ assert.equal(scene.userData.serviceLight.visible,true);
+ setWorkshopQuality(scene,'balanced');
+ assert.equal(scene.userData.serviceLight.visible,false);
+});

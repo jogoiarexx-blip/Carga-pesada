@@ -47,3 +47,10 @@ test('status visual e foco da câmera seguem o serviço contextual',()=>{
  assert.match(code,/configureWorkshopVehicle\(workshopScene,configuredVehicle\(base,previewBody\)\)/);
  assert.match(css,/\.workshop-service-status\{/);
 });
+
+test('visibilidade dos efeitos respeita o lado da câmera e interrompe giro automático',()=>{
+ assert.match(code,/Math\.sin\(previewAngle\)<-\.05\?-1:1/);
+ assert.match(code,/beginWorkshopService\(workshopScene,kind,\{side\}\)/);
+ assert.match(code,/previewSpin=false;\$\('spinModel'\)/);
+ assert.match(css,/\.garage-stage \.stage-shadow\{display:none\}/);
+});

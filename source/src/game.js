@@ -35,7 +35,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.32';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.33';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -116,7 +116,7 @@ function updateGaragePreview(reset=false){
  if(reset){decorationEpoch++;draftDecoration=normalizeDecoration(save.fleet[previewId]?.decoration);}
  replacePlayer(previewId,previewBody);player.rotation.y=0;if(paintChoice)player.userData.paint.color.set(paintChoice);
  if(workshopScene)configureWorkshopVehicle(workshopScene,configuredVehicle(base,previewBody));
- if(reset){previewAngle=2.45;previewSpin=false;previewDistance=workshopAutoDistance(base);}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
+ if(reset){previewAngle=2.45;previewSpin=false;previewDistance=workshopAutoDistance(base);garageCameraFocus.set(0,1.85,0);}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
 }
 function vehicleIcon(v,color){const hood=v.cab==='classic'||v.cab==='aero',rear=v.category==='tractor'?94:88;return `<svg viewBox="0 0 120 50" aria-hidden="true"><path d="M2 41H117" stroke="#a6b294" opacity=".4"/><path d="${hood?'M5 33V24L20 22L25 12H43V35H5Z':'M6 35V15L12 10H33V35Z'}" fill="${color}" stroke="#ced2ab" stroke-width=".7"/><path d="${hood?'M24 22L28 15H38V23Z':'M11 16H27V24H11Z'}" fill="#142c28"/><path d="M${hood?45:36} 14H112V34H${hood?45:36}Z" fill="${v.defaultBody==='tarp_trailer'?'#bb853b':'#a4b5a3'}" stroke="#d4d6bc" stroke-width=".7"/><path d="M44 34H114V38H26V34" fill="#102a24"/><g fill="#10231e" stroke="#b9c2ac" stroke-width="1.2"><circle cx="17" cy="38" r="6"/><circle cx="${rear-5}" cy="38" r="6"/>${v.axles>2||v.category==='tractor'?`<circle cx="${rear+9}" cy="38" r="6"/>`:''}</g></svg>`;}
 function renderGarage(){
@@ -149,7 +149,10 @@ function fitWorkshopPreview(){
  $('previewZoom').value=previewDistance;
 }
 function showWorkshopService(kind){
- if(mode!=='garage'||!workshopScene||!beginWorkshopService(workshopScene,kind))return;
+ if(mode!=='garage'||!workshopScene)return;
+ const side=Math.sin(previewAngle)<-.05?-1:1;
+ if(!beginWorkshopService(workshopScene,kind,{side}))return;
+ previewSpin=false;$('spinModel').setAttribute('aria-pressed','false');syncGarageCameraButtons();
  const labels={repair:'REPARO EM EXECUÇÃO',engine:'MELHORIA DO MOTOR',brakes:'AJUSTE DOS FREIOS',
   body:'INSTALANDO CARROCERIA',paint:'PINTURA DA CABINE',parts:'EQUIPANDO ACESSÓRIOS'};
  $('workshopServiceStatus').textContent=labels[kind]||'SERVIÇO EM EXECUÇÃO';
