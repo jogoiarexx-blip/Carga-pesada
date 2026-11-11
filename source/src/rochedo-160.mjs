@@ -3,16 +3,16 @@ import * as THREE from './vendor/three.module.js';
 // Rochedo 160: cabine de caminhão rígido pesado e conjunto de quatro eixos.
 // Todas as peças ficam no sistema de coordenadas do caminhão existente:
 // o nariz aponta para -Z e os pivôs de roda são mantidos pelo truck-model.
-export function buildRochedoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}) {
- const gasket=new THREE.MeshStandardMaterial({color:'#101b20',roughness:.87});
- const grill=new THREE.MeshStandardMaterial({color:'#25343b',metalness:.25,roughness:.63});
- const mesh=new THREE.MeshStandardMaterial({color:'#121d21',metalness:.28,roughness:.75});
- const brushed=new THREE.MeshStandardMaterial({color:'#9aa6a6',metalness:.72,roughness:.37});
- const window=new THREE.MeshPhysicalMaterial({color:'#36616b',metalness:.18,roughness:.17,clearcoat:.52,transparent:true,opacity:.91,depthWrite:false});
- const darkPaint=new THREE.MeshStandardMaterial({color:'#536569',metalness:.35,roughness:.55});
- const orangeLight=new THREE.MeshStandardMaterial({color:'#d88d3a',roughness:.35,emissive:'#4a2505',emissiveIntensity:.22});
- const redLight=new THREE.MeshStandardMaterial({color:'#b64337',roughness:.38});
- const tireTrim=new THREE.MeshStandardMaterial({color:'#131e21',roughness:.92});
+export function buildRochedoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}) {
+ const gasket=finish({color:'#101b20',roughness:.87});
+ const grill=finish({color:'#25343b',metalness:.25,roughness:.63});
+ const mesh=finish({color:'#121d21',metalness:.28,roughness:.75});
+ const brushed=finish({color:'#9aa6a6',metalness:.72,roughness:.37});
+ const window=finish({color:'#36616b',metalness:.18,roughness:.17,clearcoat:.52,transparent:true,opacity:.91,depthWrite:false});
+ const darkPaint=finish({color:'#536569',metalness:.35,roughness:.55});
+ const orangeLight=finish({color:'#d88d3a',roughness:.35,emissive:'#4a2505',emissiveIntensity:.22});
+ const redLight=finish({color:'#b64337',roughness:.38});
+ const tireTrim=finish({color:'#131e21',roughness:.92});
 
  // Cabine alta com teto chanfrado e traseira marcada — não reaproveita a caixa frontal genérica.
  profile(cab,[[.08,1.04],[.08,3.42],[.36,3.92],[.82,4.18],[2.49,4.18],[2.83,3.94],[2.91,1.04],
@@ -97,15 +97,15 @@ export function buildRochedoCab({cab,box,profile,rod,paint,chrome,black,glass,la
  }
 }
 
-export function detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber}){
+export function detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber,finish}){
  // Reutiliza os materiais das rodas que já entram no merge por material.
  // Evita três draw calls extras POR RODA sem perder porcas, aros e banda do pneu.
- const polished=chrome||new THREE.MeshStandardMaterial({color:'#aab5b3',metalness:.65,roughness:.32});
- const shadow=black||new THREE.MeshStandardMaterial({color:'#1b2528',metalness:.3,roughness:.69});
- const tread=rubber||new THREE.MeshStandardMaterial({color:'#1a2022',roughness:.96});
- const chassis=new THREE.MeshStandardMaterial({color:'#515f62',metalness:.41,roughness:.64});
- const reflector=new THREE.MeshStandardMaterial({color:'#db9639',roughness:.40});
- const mudflapRubber=rubber||new THREE.MeshStandardMaterial({color:'#131b1e',roughness:.95});
+ const polished=chrome||finish({color:'#aab5b3',metalness:.65,roughness:.32});
+ const shadow=black||finish({color:'#1b2528',metalness:.3,roughness:.69});
+ const tread=rubber||finish({color:'#1a2022',roughness:.96});
+ const chassis=finish({color:'#515f62',metalness:.41,roughness:.64});
+ const reflector=finish({color:'#db9639',roughness:.40});
+ const mudflapRubber=rubber||finish({color:'#131b1e',roughness:.95});
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
   const lip=new THREE.Mesh(new THREE.TorusGeometry(r*.62,.036,6,20),polished);
