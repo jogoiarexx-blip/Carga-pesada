@@ -19,8 +19,8 @@ export function createTruckMaterialSet(vehicle,paintColor){
  const style=TRUCK_MATERIAL_PALETTES[vehicle?.id]||TRUCK_MATERIAL_PALETTES.aurora;
  const cache=new Map();
  const make=(role,params={})=>{
-  const key=JSON.stringify([role,params]);
-  if(cache.has(key))return cache.get(key);
+  // Normalizar antes de criar a chave permite que vidros e cromados idênticos
+  // usem exatamente o mesmo material, mesmo com parâmetros legados distintos.
   const opts={flatShading:true};
   const source={...params};
   const brightness=(source.color instanceof THREE.Color)?source.color:undefined;
@@ -49,6 +49,8 @@ export function createTruckMaterialSet(vehicle,paintColor){
   }else{
    Object.assign(opts,{color:safeColor(source.color,'#6c7474'),roughness:clamp(source.roughness??.69,.26,.95),metalness:clamp(source.metalness??0,0,.7)});
   }
+  const key=JSON.stringify([role,opts]);
+  if(cache.has(key))return cache.get(key);
   const material=new THREE.MeshStandardMaterial(opts);
   material.name='REV33/'+role+'/'+vehicle?.id;
   material.userData={...material.userData,truckRole:role,truckId:vehicle?.id};
