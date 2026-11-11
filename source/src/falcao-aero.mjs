@@ -3,15 +3,15 @@ import * as THREE from './vendor/three.module.js';
 // Cavalo mecânico aerodinâmico contemporâneo, modelado com geometria leve.
 // O eixo local +Z aponta para o fundo do caminhão, -Z para a frente.
 // Nenhuma peça altera colisão, física, encaixes da carreta ou dados salvos.
-export function buildFalcaoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}){
- const shadow=new THREE.MeshStandardMaterial({color:'#14232c',metalness:.18,roughness:.65});
- const grille=new THREE.MeshStandardMaterial({color:'#283e4a',metalness:.35,roughness:.59});
- const brushed=new THREE.MeshStandardMaterial({color:'#a3b4ba',metalness:.62,roughness:.34});
- const shiny=new THREE.MeshStandardMaterial({color:'#d4dfe1',metalness:.79,roughness:.24});
- const smoked=new THREE.MeshPhysicalMaterial({color:'#547986',metalness:.06,roughness:.19,transparent:true,opacity:.91,clearcoat:.44});
- const marker=new THREE.MeshStandardMaterial({color:'#e4a751',metalness:.08,roughness:.34});
- const accent=new THREE.MeshStandardMaterial({color:'#405865',metalness:.24,roughness:.48});
- const tyreTrim=new THREE.MeshStandardMaterial({color:'#111a20',roughness:.88});
+export function buildFalcaoCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}){
+ const shadow=finish({color:'#14232c',metalness:.18,roughness:.65});
+ const grille=finish({color:'#283e4a',metalness:.35,roughness:.59});
+ const brushed=finish({color:'#a3b4ba',metalness:.62,roughness:.34});
+ const shiny=finish({color:'#d4dfe1',metalness:.79,roughness:.24});
+ const smoked=finish({color:'#547986',metalness:.06,roughness:.19,transparent:true,opacity:.91,clearcoat:.44});
+ const marker=finish({color:'#e4a751',metalness:.08,roughness:.34});
+ const accent=finish({color:'#405865',metalness:.24,roughness:.48});
+ const tyreTrim=finish({color:'#111a20',roughness:.88});
 
  // Capô longo e inclinado. A linha de cintura sobe progressivamente em direção à cabine.
  profile(cab,[[.10,1.02],[.10,1.68],[.29,1.91],[.86,2.13],[1.45,2.38],[2.33,2.64],[2.49,2.59],[2.49,1.02]],2.28,paint,'Falcão Aero — capô aerodinâmico esculpido');
@@ -110,11 +110,11 @@ export function buildFalcaoCab({cab,box,profile,rod,paint,chrome,black,glass,lam
  }
 }
 
-export function detailFalcaoChassis({root,wheels,layout,box}){
- const frame=new THREE.MeshStandardMaterial({color:'#35464c',metalness:.39,roughness:.59});
- const light=new THREE.MeshStandardMaterial({color:'#b2c5cc',metalness:.64,roughness:.34});
- const amber=new THREE.MeshStandardMaterial({color:'#e9ac51',roughness:.45});
- const rubber=new THREE.MeshStandardMaterial({color:'#191f23',roughness:.88});
+export function detailFalcaoChassis({root,wheels,layout,box,finish}){
+ const frame=finish({color:'#35464c',metalness:.39,roughness:.59});
+ const light=finish({color:'#b2c5cc',metalness:.64,roughness:.34});
+ const amber=finish({color:'#e9ac51',roughness:.45});
+ const rubber=finish({color:'#191f23',roughness:.88});
  // As rodas originais do motor têm três materiais por pivot. Reutilizamos esses
  // materiais para preservar as draw calls mesmo com 12 rodas articuladas.
  for(const wheel of wheels){
