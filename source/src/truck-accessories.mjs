@@ -6,6 +6,7 @@ import {addArtTruckDetails} from './art-truck-details.mjs';
 import {addDekotoraRev30} from './cab-art-rev30.mjs';
 import {planDekotoraFit} from './dekotora-fit-rev31.mjs';
 import {addDekotoraRearRev31} from './dekotora-rear-rev31.mjs';
+import {addCabVisor} from './cab-visor-rev32.mjs';
 import {bevelBox} from './truck-geometry.mjs';
 import {mergeStatic} from './truck-model.mjs';
 export function addAccessories(model,group,config){
@@ -59,7 +60,7 @@ export function addAccessories(model,group,config){
    if(style>=4)box(group,'terminal decorativo traseiro',.025,.10,.12,glow,faceX,b.base-.14,plan.end-.09-off,false);
   }
  }
- activeCategory='visor';if(a.visor){const mesh=box(root,'viseira decorativa',c.width+.13,.11,[.32,.42,.53][type('visor')-1],chrome,0,c.visorY,front+c.windZ-.09);mesh.rotation.x=-.13;box(root,'borda da viseira',c.width+.15,.035,.055,dark,0,c.visorY-.05,front+c.windZ-.29,false);}
+ activeCategory='visor';if(a.visor)addCabVisor(root,v,{cab:c,layout:l},type('visor'),{chrome,dark,edge,glow,lamp},box,bar);
  activeCategory='roofRack';if(a.roofRack){const z=front+c.roofZ,w=c.width*.85,d=c.roofDepth;for(const side of [-1,1]){for(const dz of [-d/2,d/2])rod(root,'pé do bagageiro',.035,.18,edge,side*w/2,c.roof+.09,z+dz);bar(root,'bagageiro lateral',[side*w/2,c.roof+.24,z-d/2],[side*w/2,c.roof+.24,z+d/2]);}for(const dz of (type('roofRack')===1?[-d/2,d/2]:type('roofRack')===2?[-d/2,0,d/2]:[-d/2,-d/4,0,d/4,d/2]))bar(root,'travessa bagageiro',[-w/2,c.roof+.2,z+dz],[w/2,c.roof+.2,z+dz]);}
  activeCategory='roofSpots';if(a.roofSpots){const z=front+c.roofZ-c.roofDepth/2-.02,y=c.roof+.22;bar(root,'barra de faróis',[-c.width*.43,y-.1,z],[c.width*.43,y-.1,z],.045);for(const k of (type('roofSpots')===1?[-1,0,1]:type('roofSpots')===2?[-2,-1,0,1,2]:[-3,-2,-1,0,1,2,3])){const x=k*c.width*(type('roofSpots')===3?.115:.17);box(root,'carcaça farol teto',c.width*.12,.25,.2,dark,x,y,z);box(root,'aro farol teto',c.width*.125,.26,.06,chrome,x,y,z-.1);box(root,'farol auxiliar',c.width*.095,.18,.025,lamp,x,y,z-.138,false);}}
  activeCategory='bumper';if(a.bumper){
@@ -92,7 +93,7 @@ export function addAccessories(model,group,config){
 
  for(const key of Object.keys(a)){if(!a[key]||type(key)===1)continue;activeCategory=key;const level=type(key),zBody=b.start+b.length/2-offset,xBody=b.width/2+.16;
  if(key==='skirts')continue; // desenho modular já possui seu próprio material e frisos
- if(key==='visor')for(const side of [-1,1])box(root,'ponta viseira',.06,.085,level===3?.48:.35,dark,side*(c.width/2+.04),c.visorY,front+c.windZ-.1,false);
+ // A REV32 integra as pontas da viseira ao conjunto alto, sem peças sobre o vidro.
  if(key==='roofRack'&&level===3){const z=front+c.roofZ;for(const side of [-1,1])bar(root,'grade cesto',[side*c.width*.42,c.roof+.4,z-c.roofDepth/2],[side*c.width*.42,c.roof+.4,z+c.roofDepth/2]);for(const dz of [-c.roofDepth/2,c.roofDepth/2])bar(root,'fecho cesto',[-c.width*.42,c.roof+.4,z+dz],[c.width*.42,c.roof+.4,z+dz]);}
  if(key==='bumper')for(const side of [-1,1])bar(root,'proteção para-choque',[side*c.width*.26,.9,front-.33],[side*c.width*.26,level===3?1.55:1.15,front-.33],.035);
  if(key==='exhaust'&&level===3)for(const side of [-1,1])rod(root,'anel escapamento',.12,.08,chrome,side*(c.width/2+.13),c.roof-.12,front+c.back-.13);
