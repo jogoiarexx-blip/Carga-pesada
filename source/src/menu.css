@@ -230,3 +230,11 @@ body[data-screen="garage"] .stage-controls{row-gap:6px}
  body[data-screen="garage"] .stage-controls{gap:4px}
  body[data-screen="garage"] .stage-controls button{padding:6px 7px;font-size:9px}
 }
+
+/* REV22: feedback breve e legível durante os serviços contextualizados. */
+.workshop-service-status{position:absolute;left:50%;bottom:101px;transform:translateX(-50%);z-index:7;pointer-events:none;
+ padding:10px 16px;border:1px solid #e6bd6a99;border-radius:5px;background:#091d19e8;
+ font-size:11px;font-weight:700;letter-spacing:1.2px;color:#ffe2a5;text-align:center;
+ box-shadow:0 5px 22px #0005;white-space:nowrap}
+@media(max-width:800px){.workshop-service-status{font-size:10px;bottom:93px;padding:8px 9px;letter-spacing:.6px}}
+@media(max-width:390px){.workshop-service-status{bottom:112px;max-width:95%;white-space:normal}}

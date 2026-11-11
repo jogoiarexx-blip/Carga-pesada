@@ -59,3 +59,34 @@ test('modo econômico omite detalhes dos efeitos e rejeita serviços desconhecid
  assert.equal(scene.userData.serviceSparks.visible,false);
  assert.equal(beginWorkshopService(scene,'invalid'),false);
 });
+
+test('ferramentas e luz de serviço mudam de posição conforme o tipo e o caminhão',async()=>{
+ const s=createWorkshopScene(),{VEHICLES}=await import('../src/fleet.mjs');
+ configureWorkshopVehicle(s,VEHICLES[0]);
+ assert.equal(beginWorkshopService(s,'engine'),true);
+ const motor={...s.userData.service.point};
+ assert.equal(s.userData.serviceFocus.position.z,motor.z);
+ assert.equal(s.userData.serviceSparks.position.z,motor.z);
+ assert.equal(beginWorkshopService(s,'brakes'),true);
+ const brake={...s.userData.service.point};
+ assert.notEqual(brake.z,motor.z);
+ assert.equal(s.userData.serviceLight.position.z,brake.z);
+ assert.equal(updateWorkshopService(s,.4).focus.type,'brakes');
+ configureWorkshopVehicle(s,VEHICLES.find(v=>v.id==='peregrino'));
+ assert.equal(s.userData.service,null);
+ assert.equal(beginWorkshopService(s,'body'),true);
+ assert.ok(s.userData.service.point.z>0);
+ const lights=[];s.traverse(o=>{if(o.isLight)lights.push(o)});
+ assert.equal(lights.length,1);
+});
+test('saída da oficina cancela animação e restaura luminária',async()=>{
+ const s=createWorkshopScene(),{VEHICLES}=await import('../src/fleet.mjs');
+ const {stopWorkshopService}=await import('../src/workshop-scene.mjs');
+ configureWorkshopVehicle(s,VEHICLES[1]);
+ assert.equal(beginWorkshopService(s,'paint'),true);
+ assert.equal(s.userData.serviceSpray.visible,true);
+ stopWorkshopService(s);
+ assert.equal(s.userData.service,null);
+ assert.equal(s.userData.serviceRig.visible,false);
+ assert.equal(s.userData.serviceLight.position.y,9.8);
+});

@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {workshopServiceAnchor} from './workshop-anchors.mjs';
 
 // A Oficina Farol possui um único cenário compartilhado pelos seis caminhões.
 // Geometrias estáticas são agrupadas por material (InstancedMesh) para limitar draw calls.
@@ -163,6 +164,13 @@ export function createWorkshopScene(){
  }));
  spray.name='nevoa-pintura';spray.position.set(-3.2,2.2,-1.7);spray.rotation.z=-Math.PI/2;spray.visible=false;serviceRig.add(spray);
  const sparks=new THREE.Group();sparks.name='ferramentas-em-acao';serviceRig.add(sparks);
+ const focus=new THREE.Group();focus.name='ponto-de-servico';serviceRig.add(focus);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.39,.047,6,20),new THREE.MeshBasicMaterial({
+  color:'#f3c866',transparent:true,opacity:.78,depthWrite:false,side:THREE.DoubleSide
+ }));
+ ring.name='indicador-de-inspecao';ring.rotation.y=Math.PI/2;focus.add(ring);
+ const core=new THREE.Mesh(new THREE.SphereGeometry(.12,8,5),new THREE.MeshBasicMaterial({color:'#ffdc83'}));
+ core.name='alvo-da-ferramenta';focus.add(core);
  const sparkMat=new THREE.MeshBasicMaterial({color:'#ffe1a0'});
  for(let i=0;i<5;i++){
   const spark=new THREE.Mesh(new THREE.BoxGeometry(.06,.12,.06),sparkMat);
@@ -174,6 +182,9 @@ export function createWorkshopScene(){
  root.userData.serviceTrolley=trolley;
  root.userData.serviceSpray=spray;
  root.userData.serviceSparks=sparks;
+ root.userData.serviceFocus=focus;
+ root.userData.serviceFocusRing=ring;
+ root.userData.previewVehicle=null;
  root.userData.service=null;
  root.userData.detailGroup=details;root.userData.serviceLight=point;
  setWorkshopQuality(root,'balanced');
@@ -197,44 +208,57 @@ export function configureWorkshopVehicle(root,vehicle){
  for(const rail of root.userData.serviceRails){
   rail.scale.z=railLength;rail.position.z=railZ;
  }
- root.userData.serviceTrolley.position.z=railZ-3;
- root.userData.serviceSpray.position.z=-length*.2;
- root.userData.serviceSparks.position.z=-length*.24;
+ root.userData.previewVehicle=vehicle;
+ stopWorkshopService(root);
 }
 
-// Animações breves, sem timers nem física: elevador, ferramentas ou pulverização.
+// Efeitos reutilizáveis, sem alterar carreira, saldo ou física do caminhão.
+export function stopWorkshopService(root){
+ if(!root)return;
+ root.userData.service=null;
+ root.userData.serviceRig.visible=false;
+ root.userData.servicePlatform.position.y=0;
+ root.userData.serviceLight.position.set(0,9.8,-4);
+ root.userData.serviceLight.color.set('#ffdb9a');
+}
 export function beginWorkshopService(root,type='repair'){
  if(!root)return false;
- if(!['repair','engine','brakes','body','paint','parts'].includes(type))return false;
- const rig=root.userData.serviceRig;
- root.userData.service={type,elapsed:0,duration:type==='paint'?2.0:1.65};
+ const point=workshopServiceAnchor(root.userData.previewVehicle,type);
+ if(!point)return false;
+ stopWorkshopService(root);
+ const rig=root.userData.serviceRig,painting=type==='paint';
+ root.userData.service={type,point,elapsed:0,duration:painting?2.1:1.7,trolleyX:Math.max(-5.2,point.x-1.65)};
  rig.visible=true;
- root.userData.serviceSpray.visible=type==='paint';
- root.userData.serviceTrolley.visible=type!=='paint';
- root.userData.servicePlatform.visible=type!=='paint';
- root.userData.serviceSparks.visible=type!=='paint'&&root.userData.quality!=='eco';
+ root.userData.serviceSpray.visible=painting;
+ root.userData.serviceTrolley.visible=!painting;
+ root.userData.servicePlatform.visible=!painting;
+ root.userData.serviceSparks.visible=!painting&&root.userData.quality!=='eco';
+ root.userData.serviceFocus.position.set(point.x,point.y,point.z);
+ root.userData.serviceFocusRing.material.color.set(painting?'#8be1e7':'#f3c866');
+ root.userData.serviceSpray.position.set(point.x-.55,point.y,point.z);
+ root.userData.serviceSpray.rotation.set(0,0,-Math.PI/2);
+ root.userData.serviceTrolley.position.set(root.userData.service.trolleyX,0,point.z+.45);
+ root.userData.serviceSparks.position.set(point.x,point.y,point.z);
+ root.userData.serviceLight.position.set(point.x-.2,Math.min(9,point.y+2.7),point.z);
+ root.userData.serviceLight.color.set(painting?'#c4f1ff':'#ffe0a7');
  return true;
 }
 export function updateWorkshopService(root,dt){
- if(!root?.userData.service)return {active:false,lift:0};
+ if(!root?.userData.service)return {active:false,lift:0,focus:null};
  const state=root.userData.service;
  state.elapsed=Math.min(state.duration,state.elapsed+Math.max(0,Math.min(.2,Number(dt)||0)));
- const t=state.elapsed/state.duration;
- const envelope=Math.sin(Math.PI*t)**2;
- const lift=state.type==='paint'?0:.30*envelope;
+ const t=state.elapsed/state.duration,envelope=Math.sin(Math.PI*t)**2;
+ const lift=state.type==='paint'?0:.26*envelope;
  root.userData.servicePlatform.position.y=.11+lift;
- root.userData.serviceTrolley.position.x=-4.3+envelope*.5;
- root.userData.serviceSpray.material.opacity=.12+.25*envelope;
- root.userData.serviceSpray.rotation.y=t*Math.PI*1.6;
+ root.userData.serviceTrolley.position.x=state.trolleyX+envelope*.38;
+ root.userData.serviceSpray.material.opacity=.10+.3*envelope;
+ root.userData.serviceSpray.rotation.y=Math.sin(t*8)*.24;
+ root.userData.serviceFocus.scale.setScalar(.88+.14*envelope);
+ root.userData.serviceFocusRing.material.opacity=.42+.5*envelope;
  root.userData.serviceSparks.children.forEach((o,i)=>{
   const a=i*1.256+t*10;
-  o.position.set(-2.8+Math.sin(a)*(.2+.35*envelope),1.2+Math.cos(a)*(.1+.4*envelope),Math.cos(a*1.3)*.2);
+  o.position.set(Math.sin(a)*(.1+.32*envelope),Math.cos(a)*(.1+.28*envelope),Math.cos(a*1.3)*.16);
  });
- if(state.elapsed>=state.duration){
-  root.userData.serviceRig.visible=false;
-  root.userData.service=null;
-  root.userData.servicePlatform.position.y=0;
-  return {active:false,lift:0};
- }
- return {active:true,lift};
+ if(state.elapsed>=state.duration){stopWorkshopService(root);return {active:false,lift:0,focus:null};}
+ return {active:true,lift,focus:state.point};
 }

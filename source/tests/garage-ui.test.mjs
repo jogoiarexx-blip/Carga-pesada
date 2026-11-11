@@ -38,3 +38,12 @@ test('novo zoom adaptativo e efeitos respondem apenas às compras confirmadas',(
  assert.match(html,/id="fitModel"/);
  assert.match(html,/id="previewZoom" type="range" min="14" max="70"/);
 });
+
+test('status visual e foco da câmera seguem o serviço contextual',()=>{
+ assert.match(html,/id="workshopServiceStatus"/);
+ assert.match(code,/workshopScene\?\.userData\.service\?\.point/);
+ assert.match(code,/garageCameraFocus\.lerp/);
+ assert.match(code,/stopWorkshopService\(workshopScene\)/);
+ assert.match(code,/configureWorkshopVehicle\(workshopScene,configuredVehicle\(base,previewBody\)\)/);
+ assert.match(css,/\.workshop-service-status\{/);
+});
