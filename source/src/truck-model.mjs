@@ -110,7 +110,7 @@ export function buildTruck(vehicle,color,bodyId){
  root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);mergeFactoryRear(factoryRearLights);mergeFactoryRear(factoryRearBumper);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
 }
 export function animateTruck(model,steering,speed,dt,trailerYaw=0){for(const wheel of model.userData.wheels)wheel.rotation.x-=speed*Math.max(0,dt)/(wheel.userData.radius||model.userData.wheelRadius||.64);for(const pivot of model.userData.frontWheels)pivot.rotation.y=-steering;if(model.userData.trailer)model.userData.trailer.rotation.y=trailerYaw;}
-export function disposeTruck(model){model.userData.disposed=true;releaseTrees([model]);}
+export function disposeTruck(model){model.userData.disposed=true;const used=new Set();model.traverse(o=>{if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])used.add(m);});model.userData.materials?.disposeUnused(used);releaseTrees([model]);}
 // Merge static meshes by material while preserving wheel and trailer pivots.
 // Agrupa cada conjunto substituível em uma só chamada, com cores por vértice.
 // Isso evita regressões no orçamento de draw calls do Rochedo ao ocultar as peças.
