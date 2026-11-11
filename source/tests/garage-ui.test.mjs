@@ -20,3 +20,10 @@ test('prévia da oficina permanece acessível no celular e diagnóstico fica vis
  assert.match(code,/class="workshop-overview"/);
  assert.match(code,/serviceOpen=true/);
 });
+
+test('cenário 3D carrega somente na garagem e sai da frente durante a viagem',()=>{
+ assert.match(code,/createWorkshopScene\(\)/);
+ assert.match(code,/configureWorkshopScene\(on&&mode==='garage'\)/);
+ assert.match(code,/workshopScene\.visible=visible/);
+ assert.match(css,/body\[data-screen="garage"\] \.garage-stage\{\s*background:transparent!important/);
+});
