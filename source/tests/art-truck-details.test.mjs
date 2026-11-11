@@ -9,7 +9,7 @@ import {decorateTruck,clearDecoration} from '../src/truck-decoration.mjs';
 const categories=['rearBumper','sideLights','roofRim'];
 function signature(m){const values=[];m.traverse(o=>{if(o.isMesh){const a=o.geometry.attributes.position.array;values.push(a.length,Math.round(a[0]*1000),Math.round(a[Math.min(20,a.length-1)]*1000));}});return values.join(',');}
 test('new Art Truck parts have three different styles and are listed in the workshop',async()=>{
- assert.equal(Object.keys(PARTS).length,21);
+ assert.equal(Object.keys(PARTS).length,23);
  for(const key of categories){
   assert.equal(PARTS[key].length,3);assert.ok(ACCESSORIES[key]);
   const hashes=[];for(let id=1;id<=3;id++){const m=buildTruck(VEHICLES[0],VEHICLES[0].color);await decorateTruck(m,normalizeDecoration({accessories:{[key]:true},variants:{[key]:id}}));hashes.push(signature(m));disposeTruck(m);}
