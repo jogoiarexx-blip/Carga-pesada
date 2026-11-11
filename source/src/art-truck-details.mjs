@@ -100,7 +100,7 @@ export function addArtTruckDetails({model,group,root,config,fit,type,box,rod,bar
   }
  }
  if(a.cabSign&&type('cabSign')>=2){
-  const lv=type('cabSign'),z=front+c.roofZ-c.roofDepth/2-.14,y=c.roof+.86;
+  const lv=type('cabSign'),z=front+c.roofZ-c.roofDepth/2-.14-(a.roofSpots?.24:0),y=c.roof+.86+(a.roofSpots?.20:0);
   for(let i=-2;i<=2;i++)put('cabSign',root,'luminária do letreiro',.17,.06,.05,lv===3?glow:lamp,i*c.width*.115,y,z,false);
  }
  if(a.wheelCovers){
