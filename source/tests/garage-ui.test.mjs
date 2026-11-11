@@ -128,3 +128,13 @@ test('catálogo de motores mostra seis estágios, preços e ganhos sem exigênci
  assert.match(code,/data-service="brakes"/);
  assert.match(css,/REV34 — catálogo de 6 motores/);
 });
+
+test('lojinha de buzinas integra a personalização e o botão móvel sem bloquear gameplay',()=>{
+ assert.match(code,/renderHornShop\(save,previewId,money\)/);
+ assert.match(code,/\['horns','BUZINAS'\]/);
+ assert.match(code,/bindHornControls\(\)/);
+ assert.match(code,/buyOrEquipHorn\(draft,previewId,id\)/);
+ assert.match(code,/equippedHorn\(save\.fleet\[save\.selected\]\)/);
+ assert.match(html,/id="touchHorn"/);
+ assert.match(css,/REV35 — lojinha de buzinas/);
+});
