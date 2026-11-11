@@ -8,8 +8,8 @@ export function planDekotoraFit(fit,accessories={}){
  const roofLip=l.front+c.roofZ-c.roofDepth/2;
  const roof={spotZ:roofLip-.02,signZ:roofLip-.04-(accessories.roofSpots?.24:0),
   signY:c.roof+.62+(accessories.roofSpots?.20:0),
-  topperZ:roofLip+.43,topperY:c.roof+.23+(accessories.roofRack||accessories.deflector?.30:0),
-  topperLift:accessories.roofRack||accessories.deflector?.30:0,
+  topperZ:roofLip+.43,topperY:c.roof+.23+((accessories.roofRack||accessories.deflector ? .30 : 0)),
+  topperLift:(accessories.roofRack||accessories.deflector ? .30 : 0),
   roofLip};
  return {rear,roof};
 }
