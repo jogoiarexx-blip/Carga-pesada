@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../src/vendor/three.module.js';
 import {createWorkshopScene,setWorkshopQuality,WORKSHOP_LIMITS,configureWorkshopVehicle,beginWorkshopService,updateWorkshopService} from '../src/workshop-scene.mjs';
+import {VEHICLES} from '../src/fleet.mjs';
 
 test('Oficina Farol 3D contém galpão, bancada, luminárias e adereços low-poly',()=>{
  const scene=createWorkshopScene(),names=[];
@@ -31,7 +32,8 @@ test('qualidade econômica remove detalhes; alta liga iluminação sem recriar a
 
 test('manutenção ativa plataformas, ferramentas e volta ao repouso ao terminar',()=>{
  const scene=createWorkshopScene();
- configureWorkshopVehicle(scene,{length:18.4,category:'tractor'});
+ configureWorkshopVehicle(scene,VEHICLES.find(v=>v.id==='falcao'));
+
  const rail=scene.userData.serviceRails[0];
  assert.ok(rail.scale.z>=8&&rail.scale.z<=11);
  assert.ok(beginWorkshopService(scene,'repair'));
@@ -45,6 +47,7 @@ test('manutenção ativa plataformas, ferramentas e volta ao repouso ao terminar
 });
 test('pintura usa pulverização visual sem levantar o caminhão',()=>{
  const scene=createWorkshopScene();
+ configureWorkshopVehicle(scene,VEHICLES.find(v=>v.id==='aurora'));
  assert.ok(beginWorkshopService(scene,'paint'));
  assert.equal(scene.userData.serviceSpray.visible,true);
  assert.equal(scene.userData.serviceTrolley.visible,false);
@@ -54,6 +57,7 @@ test('pintura usa pulverização visual sem levantar o caminhão',()=>{
 });
 test('modo econômico omite detalhes dos efeitos e rejeita serviços desconhecidos',()=>{
  const scene=createWorkshopScene();
+ configureWorkshopVehicle(scene,VEHICLES.find(v=>v.id==='estradeiro'));
  setWorkshopQuality(scene,'eco');
  assert.equal(beginWorkshopService(scene,'engine'),true);
  assert.equal(scene.userData.serviceSparks.visible,false);
@@ -89,4 +93,11 @@ test('saída da oficina cancela animação e restaura luminária',async()=>{
  assert.equal(s.userData.service,null);
  assert.equal(s.userData.serviceRig.visible,false);
  assert.equal(s.userData.serviceLight.position.y,9.8);
+});
+
+test('oficina impede animação sem veículo de contexto',()=>{
+ const scene=createWorkshopScene();
+ assert.equal(beginWorkshopService(scene,'paint'),false);
+ configureWorkshopVehicle(scene,VEHICLES[0]);
+ assert.equal(beginWorkshopService(scene,'paint'),true);
 });
