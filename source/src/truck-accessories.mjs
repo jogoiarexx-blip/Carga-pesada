@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {variantOf} from './parts-catalog.mjs';
 import {truckFit} from './truck-fit.mjs';
+import {planSideSkirts} from './side-skirts.mjs';
 import {bevelBox} from './truck-geometry.mjs';
 import {mergeStatic} from './truck-model.mjs';
 export function addAccessories(model,group,config){
@@ -10,7 +11,50 @@ export function addAccessories(model,group,config){
  function box(parent,name,w,h,d,m,x,y,z,bevel=true){const mesh=new THREE.Mesh(bevel?bevelBox(w,h,d):new THREE.BoxGeometry(w,h,d),m);mesh.userData.category=activeCategory;mesh.name=name;mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh;}
  function rod(parent,name,r,length,m,x,y,z,rot=0){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,length,10),m);mesh.userData.category=activeCategory;mesh.name=name;mesh.position.set(x,y,z);mesh.rotation.x=rot;mesh.castShadow=true;parent.add(mesh);return mesh;}
  function bar(parent,name,start,end,r=.025,m=chrome){const a=new THREE.Vector3(...start),delta=new THREE.Vector3(...end).sub(a),mesh=rod(parent,name,r,delta.length(),m,0,0,0);mesh.position.copy(a).addScaledVector(delta,.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());return mesh;}
- activeCategory='skirts';if(a.skirts)for(const side of [-1,1]){const z=(s.start+s.end)/2-offset;box(group,'saia lateral',.1,s.height*(type('skirts')===1?.85:1),s.length,chrome,side*(b.width/2+.1),s.y,z);box(group,'friso da saia',.018,.045,s.length-.08,edge,side*(b.width/2+.16),s.y+.1,z,false);for(const at of [s.start+.13,s.end-.13])box(group,'suporte da saia',.28,.08,.12,edge,side*1.22,1.21,at-offset,false);}
+ activeCategory='skirts';if(a.skirts){
+  const style=type('skirts'),plan=planSideSkirts(truckFit(v));
+  const tone=style===1?new THREE.MeshStandardMaterial({color:'#c6d0cd',metalness:.35,roughness:.48}):style===2?new THREE.MeshStandardMaterial({color:'#465963',metalness:.38,roughness:.47}):chrome;
+  const faceMat=style===5?dark:tone;
+  for(const side of [-1,1]){
+   const x=side*(b.width/2+.055),faceX=side*(b.width/2+.107),off=plan.offset;
+   const center=(from,to)=>(from+to)/2-off,length=(from,to)=>to-from;
+   // Trilho alto fixado no piso do baú; não atravessa os pneus.
+   box(group,'união da saia ao baú',.085,.105,length(plan.start,plan.end),style===2?edge:chrome,x,b.base-.025,center(plan.start,plan.end),false);
+   for(const span of plan.panels){
+    const w=length(span.start,span.end),z=center(span.start,span.end),h=plan.top-plan.bottom;
+    box(group,'saia lateral',.075,h,w,faceMat,x,(plan.top+plan.bottom)/2,z,false);
+    box(group,'acabamento inferior da saia',.085,.065,w,style===2?edge:chrome,x,plan.bottom+.025,z,false);
+    if(style===1){
+     box(group,'linha de carroceria integrada',.012,.043,Math.max(.05,w-.06),edge,faceX,plan.top-.11,z,false);
+    }else if(style===2){
+     box(group,'rebaixo ventilado da saia',.013,h*.42,Math.max(.10,w-.15),dark,faceX,plan.bottom+h*.55,z,false);
+     const count=Math.min(7,Math.max(2,Math.floor(w/.28)));
+     for(let i=0;i<count;i++)box(group,'aleta de ventilação lateral',.018,.045,.075,edge,faceX+.005,plan.bottom+h*.57,span.start+(i+1)*w/(count+1)-off,false);
+    }else if(style===3){
+     box(group,'friso inox superior',.017,.052,Math.max(.06,w-.08),edge,faceX,plan.top-.09,z,false);
+     for(const at of [span.start+.08,span.end-.08])for(const y of [plan.bottom+.11,plan.top-.14])
+      box(group,'rebite da saia',.023,.035,.035,edge,faceX+.01,y,at-off,false);
+    }else if(style===4){
+     box(group,'painel artístico retrô',.022,h*.48,Math.max(.09,w-.16),dark,faceX,plan.bottom+h*.55,z,false);
+     box(group,'faixa decorativa da saia',.028,.09,Math.max(.09,w-.16),glow,faceX+.01,plan.bottom+h*.59,z,false);
+     for(const at of [span.start+.07,span.end-.07])box(group,'moldura vertical retrô',.028,h-.10,.065,chrome,faceX+.01,(plan.top+plan.bottom)/2,at-off,false);
+    }else if(style===5){
+     box(group,'cassete luminoso lateral',.026,h*.53,Math.max(.09,w-.14),edge,faceX,plan.bottom+h*.54,z,false);
+     box(group,'barra LED da saia',.036,.043,Math.max(.09,w-.14),glow,faceX+.018,plan.bottom+.085,z,false);
+     const count=Math.min(10,Math.max(2,Math.floor(w/.36)));
+     for(let i=0;i<count;i++)box(group,'ponto luminoso da saia',.04,.08,.095,glow,faceX+.025,plan.bottom+h*.61,span.start+(i+.5)*w/count-off,false);
+    }
+    for(const at of [span.start+.035,span.end-.035])
+     box(group,'ponteira da saia',.09,h-.065,.055,style===2?edge:chrome,x,plan.bottom+h/2,at-off,false);
+   }
+   // O recorte da roda é um espaço livre, não uma textura pintada.
+   for(const cut of plan.cuts)for(const at of [cut.start+.035,cut.end-.035])
+    box(group,'limite do recorte da roda',.06,.11,.075,style===2?dark:edge,x,plan.top-.10,at-off,false);
+   // Finaliza no canto traseiro mesmo quando o último eixo ocupa quase todo o fundo.
+   box(group,'continuação traseira da saia',.085,.17,.16,style===2?edge:chrome,x,b.base-.13,plan.end-.08-off,false);
+   if(style>=4)box(group,'terminal decorativo traseiro',.025,.10,.12,glow,faceX,b.base-.14,plan.end-.09-off,false);
+  }
+ }
  activeCategory='visor';if(a.visor){const mesh=box(root,'viseira decorativa',c.width+.13,.11,[.32,.42,.53][type('visor')-1],chrome,0,c.visorY,front+c.windZ-.09);mesh.rotation.x=-.13;box(root,'borda da viseira',c.width+.15,.035,.055,dark,0,c.visorY-.05,front+c.windZ-.29,false);}
  activeCategory='roofRack';if(a.roofRack){const z=front+c.roofZ,w=c.width*.85,d=c.roofDepth;for(const side of [-1,1]){for(const dz of [-d/2,d/2])rod(root,'pé do bagageiro',.035,.18,edge,side*w/2,c.roof+.09,z+dz);bar(root,'bagageiro lateral',[side*w/2,c.roof+.24,z-d/2],[side*w/2,c.roof+.24,z+d/2]);}for(const dz of (type('roofRack')===1?[-d/2,d/2]:type('roofRack')===2?[-d/2,0,d/2]:[-d/2,-d/4,0,d/4,d/2]))bar(root,'travessa bagageiro',[-w/2,c.roof+.2,z+dz],[w/2,c.roof+.2,z+dz]);}
  activeCategory='roofSpots';if(a.roofSpots){const z=front+c.roofZ-c.roofDepth/2-.02,y=c.roof+.22;bar(root,'barra de faróis',[-c.width*.43,y-.1,z],[c.width*.43,y-.1,z],.045);for(const k of (type('roofSpots')===1?[-1,0,1]:type('roofSpots')===2?[-2,-1,0,1,2]:[-3,-2,-1,0,1,2,3])){const x=k*c.width*(type('roofSpots')===3?.115:.17);box(root,'carcaça farol teto',c.width*.12,.25,.2,dark,x,y,z);box(root,'aro farol teto',c.width*.125,.26,.06,chrome,x,y,z-.1);box(root,'farol auxiliar',c.width*.095,.18,.025,lamp,x,y,z-.138,false);}}
@@ -43,7 +87,7 @@ export function addAccessories(model,group,config){
  activeCategory='cabSign';if(a.cabSign){const w=c.width*[.55,.7,.75][type('cabSign')-1],z=front+c.roofZ-c.roofDepth/2-.04,y=c.roof+.62;for(const side of [-1,1])rod(root,'suporte letreiro',.027,.39,chrome,side*w*.37,c.roof+.24,z);box(root,'moldura letreiro',w,.37,.13,chrome,0,y,z);let face=lamp;if(typeof document!=='undefined'){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#0c2329';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#d9b969';ctx.lineWidth=6;ctx.strokeRect(4,4,504,120);ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffe292';ctx.fillText(config.signText,256,66,470);const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;face=new THREE.MeshBasicMaterial({map:t});}const sign=new THREE.Mesh(new THREE.PlaneGeometry(w-.1,.28),face);sign.name='letreiro luminoso';sign.rotation.y=Math.PI;sign.position.set(0,y,z-.071);root.add(sign);}
 
  for(const key of Object.keys(a)){if(!a[key]||type(key)===1)continue;activeCategory=key;const level=type(key),zBody=b.start+b.length/2-offset,xBody=b.width/2+.16;
- if(key==='skirts')for(const side of [-1,1])for(let i=1;i<=level+1;i++)box(group,'detalhe saia',.02,.055,Math.max(.08,s.length/(level+3)),level===2?dark:edge,side*xBody,s.y-.02,s.start+i*s.length/(level+2)-offset,false);
+ if(key==='skirts')continue; // desenho modular já possui seu próprio material e frisos
  if(key==='visor')for(const side of [-1,1])box(root,'ponta viseira',.06,.085,level===3?.48:.35,dark,side*(c.width/2+.04),c.visorY,front+c.windZ-.1,false);
  if(key==='roofRack'&&level===3){const z=front+c.roofZ;for(const side of [-1,1])bar(root,'grade cesto',[side*c.width*.42,c.roof+.4,z-c.roofDepth/2],[side*c.width*.42,c.roof+.4,z+c.roofDepth/2]);for(const dz of [-c.roofDepth/2,c.roofDepth/2])bar(root,'fecho cesto',[-c.width*.42,c.roof+.4,z+dz],[c.width*.42,c.roof+.4,z+dz]);}
  if(key==='bumper')for(const side of [-1,1])bar(root,'proteção para-choque',[side*c.width*.26,.9,front-.33],[side*c.width*.26,level===3?1.55:1.15,front-.33],.035);
