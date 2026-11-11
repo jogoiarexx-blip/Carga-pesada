@@ -107,11 +107,51 @@ export function buildTruck(vehicle,color,bodyId){
  if(v.id==='peregrino')detailPeregrinoChassis({root,wheels,layout,box});
  if(v.id==='falcao')detailFalcaoChassis({root,wheels,layout,box});
  if(v.id==='imperador')detailImperadorChassis({root,wheels,layout,box});
- root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);mergeStatic(factoryRearLights,true);mergeStatic(factoryRearBumper,true);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
+ root.userData.wheelRadius=heavy?.66:.58;root.userData.fit=truckFit(v);root.userData.axles=axles;root.userData.body=v.body;root.userData.components=[];root.traverse(o=>{if(o.name)root.userData.components.push(o.name);});for(const wheel of wheels)mergeStatic(wheel);mergeFactoryRear(factoryRearLights);mergeFactoryRear(factoryRearBumper);if(root.userData.trailer)mergeStatic(root.userData.trailer);mergeStatic(root);return root;
 }
 export function animateTruck(model,steering,speed,dt,trailerYaw=0){for(const wheel of model.userData.wheels)wheel.rotation.x-=speed*Math.max(0,dt)/(wheel.userData.radius||model.userData.wheelRadius||.64);for(const pivot of model.userData.frontWheels)pivot.rotation.y=-steering;if(model.userData.trailer)model.userData.trailer.rotation.y=trailerYaw;}
 export function disposeTruck(model){model.userData.disposed=true;releaseTrees([model]);}
 // Merge static meshes by material while preserving wheel and trailer pivots.
+// Agrupa cada conjunto substituível em uma só chamada, com cores por vértice.
+// Isso evita regressões no orçamento de draw calls do Rochedo ao ocultar as peças.
+function mergeFactoryRear(parent){
+ parent.updateWorldMatrix(true,true);
+ const children=parent.children.filter(o=>o.isMesh);
+ if(!children.length)return;
+ const inverse=parent.matrixWorld.clone().invert();
+ const geometries=[],names=new Set();
+ let count=0;
+ for(const mesh of children){
+  const matrix=new THREE.Matrix4().multiplyMatrices(inverse,mesh.matrixWorld);
+  let g=mesh.geometry.clone().applyMatrix4(matrix);
+  if(g.index){const indexed=g;g=g.toNonIndexed();indexed.dispose();}
+  geometries.push({mesh,geometry:g});
+  count+=g.attributes.position.count;
+  if(mesh.name)names.add(mesh.name);
+ }
+ const positions=new Float32Array(count*3),normals=new Float32Array(count*3),colors=new Float32Array(count*3);
+ let cursor=0;
+ for(const {mesh,geometry:g} of geometries){
+  const p=g.attributes.position.array,n=g.attributes.normal.array;
+  positions.set(p,cursor);normals.set(n,cursor);
+  const color=mesh.material.color||new THREE.Color('#ffffff');
+  for(let i=0;i<g.attributes.position.count;i++){
+   const j=cursor+i*3;colors[j]=color.r;colors[j+1]=color.g;colors[j+2]=color.b;
+  }
+  cursor+=p.length;g.dispose();
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+ geometry.setAttribute('normal',new THREE.BufferAttribute(normals,3));
+ geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+ geometry.computeBoundingSphere();
+ const result=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({vertexColors:true,metalness:.35,roughness:.53,flatShading:true}));
+ result.castShadow=true;result.receiveShadow=true;parent.add(result);
+ const originals=new Set();
+ for(const child of children){child.removeFromParent();originals.add(child.geometry);}
+ for(const g of originals)g.dispose();
+ for(const name of names){const anchor=new THREE.Group();anchor.name=name;parent.add(anchor);}
+}
 export function mergeStatic(parent,keepNames=false){
  parent.updateWorldMatrix(true,true);const inverse=parent.matrixWorld.clone().invert(),batches=new Map(),sources=[];
  function walk(node){for(const child of node.children){if(child.userData.dynamic)continue;if(child.isMesh){const list=batches.get(child.material)||[];list.push(child);batches.set(child.material,list);sources.push(child);}else walk(child);}}
