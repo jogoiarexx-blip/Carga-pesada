@@ -14,7 +14,7 @@ test('catálogo inclui a buzina original, estilos variados e duas falas cômicas
  assert.equal(findHorn('inexistente'),null);
 });
 test('compra individual cobra uma vez, permite reequipar gratuitamente e mantém o caminhão selecionado',()=>{
- const s=freshSave();s.money=10000;s.deliveries=10;purchase(s,'estradeiro');
+ const s=freshSave();s.money=30000;s.deliveries=10;assert.equal(purchase(s,'estradeiro'),true);
  s.selected='aurora';const initial=s.money;
  assert.equal(buyOrEquipHorn(s,'estradeiro','air'),true);
  assert.equal(s.money,initial-450);
