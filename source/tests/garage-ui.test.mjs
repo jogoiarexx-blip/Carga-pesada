@@ -31,7 +31,7 @@ test('cenário 3D carrega somente na garagem e sai da frente durante a viagem',(
 test('novo zoom adaptativo e efeitos respondem apenas às compras confirmadas',()=>{
  assert.match(code,/workshopAutoDistance\(base\)/);
  assert.match(code,/workshopCameraDistance\(/);
- assert.match(code,/beginWorkshopService\(workshopScene,kind\)/);
+ assert.match(code,/beginWorkshopService\(workshopScene,kind,\{side\}\)/);
  assert.match(code,/updateWorkshopService\(workshopScene,dt\)/);
  assert.match(code,/if\(commitGarage\(draft=>repairTruck/);
  assert.match(code,/showWorkshopService\('repair'\)/);
