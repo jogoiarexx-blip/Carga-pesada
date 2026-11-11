@@ -3,12 +3,12 @@ import * as THREE from './vendor/three.module.js';
 // Imperador Frontal: cavalo 4x2, cabine avançada SOBRE o motor.
 // Todo o detalhe é geometria real. A frente aponta para -Z; o engate permanece intacto.
 // Materiais repetidos são compartilhados para reduzir chamadas de renderização após mergeStatic.
-export function buildImperadorCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange}){
- const charcoal=new THREE.MeshStandardMaterial({color:'#1a292e',metalness:.14,roughness:.71});
- const brushed=new THREE.MeshStandardMaterial({color:'#899a9d',metalness:.65,roughness:.32});
- const glassTint=new THREE.MeshPhysicalMaterial({color:'#547c8d',metalness:.07,roughness:.23,transparent:true,opacity:.91,clearcoat:.44});
- const rubber=new THREE.MeshStandardMaterial({color:'#151b1e',roughness:.91});
- const inset=new THREE.MeshStandardMaterial({color:'#314650',metalness:.27,roughness:.57});
+export function buildImperadorCab({cab,box,profile,rod,paint,chrome,black,glass,lamp,orange,finish}){
+ const charcoal=finish({color:'#1a292e',metalness:.14,roughness:.71});
+ const brushed=finish({color:'#899a9d',metalness:.65,roughness:.32});
+ const glassTint=finish({color:'#547c8d',metalness:.07,roughness:.23,transparent:true,opacity:.91,clearcoat:.44});
+ const rubber=finish({color:'#151b1e',roughness:.91});
+ const inset=finish({color:'#314650',metalness:.27,roughness:.57});
 
  // Proporções de caminhão pesado europeu/brasileiro com cabine avançada.
  // O conjunto ocupa só 3,27 m atrás da frente, deixando folga até o semirreboque.
@@ -110,12 +110,12 @@ export function buildImperadorCab({cab,box,profile,rod,paint,chrome,black,glass,
  }
 }
 
-export function detailImperadorChassis({root,wheels,layout,box}){
+export function detailImperadorChassis({root,wheels,layout,box,finish}){
  // Reaproveita as três classes de material das rodas originais e não acrescenta
  // novos lotes de renderização em cada pivot de roda.
- const shadow=new THREE.MeshStandardMaterial({color:'#1a272a',roughness:.84});
- const frame=new THREE.MeshStandardMaterial({color:'#566568',metalness:.47,roughness:.49});
- const amber=new THREE.MeshStandardMaterial({color:'#e9a84f',metalness:.05,roughness:.48});
+ const shadow=finish({color:'#1a272a',roughness:.84});
+ const frame=finish({color:'#566568',metalness:.47,roughness:.49});
+ const amber=finish({color:'#e9a84f',metalness:.05,roughness:.48});
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
   const parts=wheel.children.filter(o=>o.isMesh);
