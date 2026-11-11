@@ -4,11 +4,17 @@ import {driveStep,clamp,sweptOverlap,trafficSpeed,crossingFraction,settlement,co
 import {VEHICLES,configuredVehicle} from './fleet.mjs';
 import {routeFor,roadCurvature,roadSlope} from './routes.mjs';
 import {createBossTraffic,planRivalTraffic,BOSS_CAR_LENGTH} from './boss-traffic.mjs';
+import {missionDifficulty} from './mission-difficulty.mjs';
 export const FIXED_STEP=1/60;
 export function createSession(contract,vehicle,parts){
  vehicle=configuredVehicle(vehicle,parts.body);
  const run={s:0,x:-3.4,speed:0,lateral:0,steering:0,elapsed:0,cargo:100,health:parts.health,initialHealth:parts.health,fuel:100,slip:0,boost:0,boostCooldown:0,trailerYaw:0};
- const traffic=contract.race?createBossTraffic(contract):Array.from({length:16},(_,i)=>({s:125+i*170,speed:i%3===0?-13:10+i%4*1.2,cruise:i%3===0?13:10+i%4*1.2,direction:i%3===0?-1:1,x:i%3===0?3.4:-3.4,cooldown:0}));
+ const challenge=missionDifficulty(contract);
+ const traffic=contract.race?createBossTraffic(contract):Array.from({length:challenge.trafficCount},(_,i)=>({
+  s:125+i*challenge.trafficSpacing,
+  speed:i%3===0?-13:10+i%4*1.2,cruise:i%3===0?13:10+i%4*1.2,
+  direction:i%3===0?-1:1,x:i%3===0?3.4:-3.4,cooldown:0
+ }));
  return {contract,vehicle,parts:{...parts},run,traffic,rival:contract.race?{s:0,speed:0,x:3.4,length:VEHICLES.find(v=>v.id===rivalProfile(contract).vehicleId).length,laneTarget:3.4,hitCooldown:0,hits:0}:null,status:entryCheck(contract,vehicle,parts).ok?'running':'failed',reason:entryCheck(contract,vehicle,parts).reason||null,events:[],hitCooldown:0,accumulator:0,hits:0,boosts:0,result:null};
 }
 function failure(run,contract){

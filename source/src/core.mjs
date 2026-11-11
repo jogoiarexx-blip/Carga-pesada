@@ -4,6 +4,7 @@ import {EXTRA_CONTRACTS} from './story-expansion.mjs';
 import {installUpgrade} from './workshop.mjs';
 import {normalizeCampaign,missionUnlocked,recordMission} from './campaign.mjs';
 import {roadCurvature,routeFor} from './routes.mjs';
+import {balanceFreightContract,missionDifficulty} from './mission-difficulty.mjs';
 import {VEHICLES,configuredVehicle,purchaseUnlocked} from './fleet.mjs';
 export {VEHICLES} from './fleet.mjs';
 export const CONTRACTS = [
@@ -12,7 +13,7 @@ export const CONTRACTS = [
  {id:'m03',roadId:'vale',tag:'03 · CUIDADO COM A CARGA',name:'Não Arranhe a Pintura',route:'Porto Salgueiro → Vale do Rio Grande',description:'Cerâmicas artesanais. Freie antes das curvas e preserve a carga.',length:3200,time:250,weight:2.5,pay:2500,min:65,fragile:1.8,toll:60},
  {id:'m04',roadId:'circuito',tag:'04 · PROVA AUTORIZADA',name:'Coiote na Pista',route:'Circuito fechado · Estrada dos Ipês',description:'Rafa Coiote espera na largada. Dispute posição em um trecho fechado.',length:2800,time:220,weight:0,pay:2200,min:0,fragile:0,toll:0,race:true}
 ];
-CONTRACTS.forEach((c,i)=>{c.chapter=0;c.night=i===1;});CONTRACTS.push(...EXTRA_CONTRACTS);for(const c of CONTRACTS){if(c.chapter>0&&!c.race){c.time=Math.ceil(c.length/(c.chapter>=4?16:14)+35);c.weight=c.chapter===1?2.5:c.chapter===2?4.5:c.chapter===3?9:c.chapter===4?14:16;c.min=Math.max(c.min,55);}}
+CONTRACTS.forEach((c,i)=>{c.chapter=0;c.night=i===1;});CONTRACTS.push(...EXTRA_CONTRACTS);for(const c of CONTRACTS){if(c.chapter>0&&!c.race){c.weight=c.chapter===1?2.5:c.chapter===2?4.5:c.chapter===3?9:c.chapter===4?14:16;balanceFreightContract(c);}}
 export function freshSave(){return {version:1,money:1200,deliveries:0,wins:0,reputation:0,selected:'aurora',fleet:{aurora:{health:100,engine:0,brakes:0,color:VEHICLES[0].color,body:VEHICLES[0].defaultBody}},best:{},medals:{},campaign:{version:1,completed:[],bonusesClaimed:[],legacyAvailable:[]}};}
 export function loadSave(raw){try {const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.money)||s.money<0||!s.fleet?.aurora) return freshSave();for(const [id,t] of Object.entries(s.fleet)){if(!VEHICLES.some(v=>v.id===id))delete s.fleet[id];else{t.health=clamp(Number(t.health)||1,1,100);t.engine=clamp(Number(t.engine)||0,0,2);t.brakes=clamp(Number(t.brakes)||0,0,2);t.body=configuredVehicle(VEHICLES.find(v=>v.id===id),t.body).body;if(!/^#[0-9a-f]{6}$/i.test(t.color))t.color=VEHICLES.find(v=>v.id===id).color;}}if(!s.fleet[s.selected])s.selected='aurora';return {...freshSave(),...s,deliveries:Math.max(0,Number(s.deliveries)||0),wins:Math.max(0,Number(s.wins)||0),best:s.best||{},campaign:normalizeCampaign(s),medals:normalizeMedals(s.medals,normalizeCampaign(s).completed)};}catch{return freshSave();}}
 export function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
@@ -25,6 +26,7 @@ export function driveStep(state,input,vehicle,parts,contract,dt){
  const top=(vehicle.max+parts.engine*12+(boosted?15:0))/3.6,load=1-contract.weight/(vehicle.capacity*5);
  const acceleration=vehicle.accel*load*(1+parts.engine*.14),massFactor=1+contract.weight/vehicle.capacity*.3;
  const braking=vehicle.brake*(1+parts.brakes*.25)/massFactor;
+ const challenge=missionDifficulty(contract);
  if(input.gas)state.speed+=(acceleration+(boosted?4:0))*dt;
  if(input.brake)state.speed=state.speed>0?Math.max(0,state.speed-braking*dt):state.speed-1.8*dt;
  if(input.hard)state.speed-=Math.sign(state.speed)*Math.min(Math.abs(state.speed),braking*1.7*dt);
@@ -40,8 +42,9 @@ export function driveStep(state,input,vehicle,parts,contract,dt){
  state.x=clamp(state.x+state.lateral*dt,-12,12);
  const turnForce=Math.abs(curve*state.speed*state.speed)+Math.abs(state.steering*state.speed*.45);
  state.stability=clamp(100-turnForce*17*massFactor,0,100);
- if(turnForce>3.4&&Math.abs(state.speed)>10){state.speed*=Math.exp(-.1*dt);state.cargo=clamp(state.cargo-(turnForce-3.4)*contract.fragile*dt*.3,0,100);}
- if(Math.abs(state.x)>7.5){state.speed*=Math.exp(-.8*dt);if(Math.abs(state.speed)>5){state.cargo=clamp(state.cargo-dt*contract.fragile*.7,0,100);state.health=clamp(state.health-dt*.2,0,100);}}
+ const safeForce=3.4-Math.max(0,challenge.tier-1)*.17+(parts.brakes||0)*.10;
+ if(turnForce>safeForce&&Math.abs(state.speed)>10){state.speed*=Math.exp(-.1*dt);state.cargo=clamp(state.cargo-(turnForce-safeForce)*contract.fragile*dt*.3,0,100);}
+ if(Math.abs(state.x)>7.5){state.speed*=Math.exp(-.8*dt);if(Math.abs(state.speed)>5){state.cargo=clamp(state.cargo-dt*contract.fragile*.7,0,100);state.health=clamp(state.health-dt*(.2+.03*challenge.tier),0,100);}}
  state.s=Math.max(0,state.s+state.speed*dt);state.fuel=Math.max(0,state.fuel-dt*(.013+Math.abs(state.speed)*.001));state.elapsed+=dt;
 }
 // Sweep the relative motion through a rectangle: no tunnelling between frames.

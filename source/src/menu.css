@@ -566,3 +566,9 @@ body[data-screen="garage"] .garage-actions .disabled-note{color:#bfceb6;font-siz
  body[data-screen="garage"] .garage-stat-copy b{font-size:21px}
  body[data-screen="garage"] .garage-compare-panel .compare-row{font-size:10px}
 }
+
+/* REV28 — dificuldade progressiva visível antes do frete, sem bloquear a interface. */
+.challenge-summary{padding:12px 15px;border-left:3px solid #e4b65e;border-radius:4px;
+ background:linear-gradient(100deg,#153d32e8,#122b25dc);
+ color:#f0dec0;font-size:12px;line-height:1.65}
+.contract-requirements{line-height:1.6}
