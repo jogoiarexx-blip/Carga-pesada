@@ -81,6 +81,8 @@ export function createTruckMaterialSet(vehicle,paintColor){
   orange:make('light',{color:'#df9d43',emissive:'#3d2207',emissiveIntensity:.11}),
   tarp:make('tarp'),
   finish,
-  materialCount:()=>cache.size
+  materialCount:()=>cache.size,
+  disposeUnused:used=>{for(const [key,material] of cache)if(!used.has(material)){material.dispose();cache.delete(key);}}
+
  };
 }
