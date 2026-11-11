@@ -17,9 +17,9 @@ function signature(m){
  });
  return pieces.join(',');
 }
-test('REV30 brings 21 categories / 65 options and geometrically different roof and front trim',async()=>{
- assert.equal(Object.keys(PARTS).length,21);
- assert.equal(Object.values(PARTS).reduce((s,list)=>s+list.length,0),65);
+test('REV30 brings 23 categories / 71 options and geometrically different roof and front trim',async()=>{
+ assert.equal(Object.keys(PARTS).length,23);
+ assert.equal(Object.values(PARTS).reduce((s,list)=>s+list.length,0),71);
  for(const [key,anchor] of [['cabTopper','base da coroa de cabine'],['frontGarnish','máscara frontal perfilada']]){
   assert.ok(ACCESSORIES[key]);assert.equal(PARTS[key].length,3);
   const versions=[];
