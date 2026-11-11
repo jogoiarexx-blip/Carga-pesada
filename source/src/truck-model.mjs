@@ -103,7 +103,7 @@ export function buildTruck(vehicle,color,bodyId){
  box(factoryRearBumper,2.4,.18,.15,chrome,0,.7,bodyEnd+.22,'para-choque traseiro');box(factoryRearBumper,.7,.17,.08,black,0,.99,bodyEnd+.16,'placa');
  if(v.id==='aurora')detailAuroraChassis({root,cab,wheels,layout,box});
  if(v.id==='estradeiro')detailEstradeiroChassis({root,wheels,layout,box});
- if(v.id==='rochedo')detailRochedoAxles({root,wheels,layout,box});
+ if(v.id==='rochedo')detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber});
  if(v.id==='peregrino')detailPeregrinoChassis({root,wheels,layout,box});
  if(v.id==='falcao')detailFalcaoChassis({root,wheels,layout,box});
  if(v.id==='imperador')detailImperadorChassis({root,wheels,layout,box});

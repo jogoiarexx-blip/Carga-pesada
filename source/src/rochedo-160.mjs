@@ -97,10 +97,12 @@ export function buildRochedoCab({cab,box,profile,rod,paint,chrome,black,glass,la
  }
 }
 
-export function detailRochedoAxles({root,wheels,layout,box}){
- const polished=new THREE.MeshStandardMaterial({color:'#aab5b3',metalness:.65,roughness:.32});
- const shadow=new THREE.MeshStandardMaterial({color:'#1b2528',metalness:.3,roughness:.69});
- const tread=new THREE.MeshStandardMaterial({color:'#1a2022',roughness:.96});
+export function detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber}){
+ // Reutiliza os materiais das rodas que já entram no merge por material.
+ // Evita três draw calls extras POR RODA sem perder porcas, aros e banda do pneu.
+ const polished=chrome||new THREE.MeshStandardMaterial({color:'#aab5b3',metalness:.65,roughness:.32});
+ const shadow=black||new THREE.MeshStandardMaterial({color:'#1b2528',metalness:.3,roughness:.69});
+ const tread=rubber||new THREE.MeshStandardMaterial({color:'#1a2022',roughness:.96});
  const chassis=new THREE.MeshStandardMaterial({color:'#515f62',metalness:.41,roughness:.64});
  const reflector=new THREE.MeshStandardMaterial({color:'#db9639',roughness:.40});
  const rubber=new THREE.MeshStandardMaterial({color:'#131b1e',roughness:.95});
