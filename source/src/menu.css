@@ -265,3 +265,11 @@ body[data-screen="garage"] #garageBackdrop:after{
 }
 body[data-screen="garage"] .garage-stage{isolation:isolate}
 body[data-screen="garage"] .stage-note{text-shadow:0 2px 8px #06140d,0 0 3px #05100b}
+
+/* REV30: conjuntos de inspiração Dekotora, legíveis inclusive no celular. */
+.deko-presets{border:1px solid #bc9f654f;background:#0b241e85;padding:12px;border-radius:7px;margin:12px 0}
+.deko-presets strong{display:block;font-size:11px;letter-spacing:1px;color:#e7c88b;margin-bottom:8px}
+.deko-preset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.deko-preset-grid button{min-height:42px;padding:7px 5px;font-size:10px;line-height:1.25;white-space:normal}
+.deko-presets small{display:block;color:#adbcb3;margin-top:8px;line-height:1.4}
+@media(max-width:510px){.deko-preset-grid{grid-template-columns:1fr}.deko-preset-grid button{min-height:42px;font-size:11px}}
