@@ -2,11 +2,11 @@
 // Dados compartilhados por menus, simulação e testes, sem dependência de renderização.
 const TIERS=[
  {label:'APRENDIZAGEM',average:0,buffer:0,minCargo:0,fragile:1,extraTraffic:0,spacing:170},
- {label:'MODERADA',average:15.4,buffer:40,minCargo:60,fragile:1.20,extraTraffic:2,spacing:150},
- {label:'EXIGENTE',average:16.3,buffer:38,minCargo:67,fragile:1.45,extraTraffic:4,spacing:140},
- {label:'DIFÍCIL',average:17.2,buffer:37,minCargo:74,fragile:1.70,extraTraffic:6,spacing:130},
- {label:'PESADA',average:18,buffer:36,minCargo:80,fragile:1.95,extraTraffic:8,spacing:120},
- {label:'ELITE',average:18.8,buffer:35,minCargo:86,fragile:2.20,extraTraffic:10,spacing:110}
+ {label:'MODERADA',average:19.3,buffer:28,minCargo:60,fragile:1.20,extraTraffic:2,spacing:150},
+ {label:'EXIGENTE',average:20.8,buffer:27,minCargo:67,fragile:1.45,extraTraffic:4,spacing:140},
+ {label:'DIFÍCIL',average:22,buffer:25,minCargo:74,fragile:1.70,extraTraffic:6,spacing:130},
+ {label:'PESADA',average:23.1,buffer:25,minCargo:80,fragile:1.95,extraTraffic:8,spacing:120},
+ {label:'ELITE',average:24,buffer:24,minCargo:86,fragile:2.20,extraTraffic:10,spacing:110}
 ];
 export function missionDifficulty(contract){
  const tier=Math.min(5,Math.max(0,Math.trunc(Number(contract?.chapter)||0)));

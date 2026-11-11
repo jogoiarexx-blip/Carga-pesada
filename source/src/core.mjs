@@ -9,8 +9,8 @@ import {VEHICLES,configuredVehicle,purchaseUnlocked} from './fleet.mjs';
 export {VEHICLES} from './fleet.mjs';
 export const CONTRACTS = [
  {id:'m01',roadId:'ipes',tag:'01 · FRETE DE RECOMEÇO',name:'A Aurora Desperta',route:'Porto Salgueiro → Vila dos Ipês',description:'Ferramentas para a cooperativa. Um frete curto para reencontrar o caminho.',length:1800,time:180,weight:1.2,pay:1500,min:30,fragile:1,toll:0},
- {id:'m02',roadId:'porto',tag:'02 · PRIMEIRO CONTRATO',name:'O Primeiro Frete',route:'Porto Salgueiro → Armazém 17',description:'Peças de reposição para o porto. O primeiro contrato da Oficina Farol.',length:2400,time:210,weight:1.8,pay:1800,min:45,fragile:1.2,toll:0},
- {id:'m03',roadId:'vale',tag:'03 · CUIDADO COM A CARGA',name:'Não Arranhe a Pintura',route:'Porto Salgueiro → Vale do Rio Grande',description:'Cerâmicas artesanais. Freie antes das curvas e preserve a carga.',length:3200,time:250,weight:2.5,pay:2500,min:65,fragile:1.8,toll:60},
+ {id:'m02',roadId:'porto',tag:'02 · PRIMEIRO CONTRATO',name:'O Primeiro Frete',route:'Porto Salgueiro → Armazém 17',description:'Peças de reposição para o porto. O primeiro contrato da Oficina Farol.',length:2400,time:170,weight:1.8,pay:1800,min:45,fragile:1.2,toll:0},
+ {id:'m03',roadId:'vale',tag:'03 · CUIDADO COM A CARGA',name:'Não Arranhe a Pintura',route:'Porto Salgueiro → Vale do Rio Grande',description:'Cerâmicas artesanais. Freie antes das curvas e preserve a carga.',length:3200,time:195,weight:2.5,pay:2500,min:65,fragile:1.8,toll:60},
  {id:'m04',roadId:'circuito',tag:'04 · PROVA AUTORIZADA',name:'Coiote na Pista',route:'Circuito fechado · Estrada dos Ipês',description:'Rafa Coiote espera na largada. Dispute posição em um trecho fechado.',length:2800,time:220,weight:0,pay:2200,min:0,fragile:0,toll:0,race:true}
 ];
 CONTRACTS.forEach((c,i)=>{c.chapter=0;c.night=i===1;});CONTRACTS.push(...EXTRA_CONTRACTS);for(const c of CONTRACTS){if(c.chapter>0&&!c.race){c.weight=c.chapter===1?2.5:c.chapter===2?4.5:c.chapter===3?9:c.chapter===4?14:16;balanceFreightContract(c);}}
@@ -24,7 +24,7 @@ export function upgrade(s,type){return installUpgrade(s,s.selected,type);}
 export function driveStep(state,input,vehicle,parts,contract,dt){
  const boosted=contract.race&&state.boost>0;
  const top=(vehicle.max+parts.engine*12+(boosted?15:0))/3.6,load=1-contract.weight/(vehicle.capacity*5);
- const acceleration=vehicle.accel*load*(1+parts.engine*.14),massFactor=1+contract.weight/vehicle.capacity*.3;
+ const acceleration=vehicle.accel*Math.max(.28,load)*(1+parts.engine*.14),massFactor=1+contract.weight/vehicle.capacity*.3;
  const braking=vehicle.brake*(1+parts.brakes*.25)/massFactor;
  const challenge=missionDifficulty(contract);
  if(input.gas)state.speed+=(acceleration+(boosted?4:0))*dt;

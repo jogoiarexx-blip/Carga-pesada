@@ -1,9 +1,21 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {CONTRACTS,VEHICLES,settlement} from '../src/core.mjs';import {entryCheck,requirementsFor,rivalProfile,freightTimeBonus,duelLines} from '../src/progression.mjs';import {createSession,resolveSession} from '../src/session.mjs';import {replay} from './helpers/replay-driver.mjs';import {speedAngle,mapPoint} from '../src/driving-hud.mjs';import {freshSave} from '../src/core.mjs';import {THEMES} from '../src/road-music.mjs';
 const mission=id=>CONTRACTS.find(c=>c.id===id),stock={health:100,engine:0,brakes:0};
-test('stock truck can enter tutorial but cannot start the first duel',()=>{assert.ok(entryCheck(mission('m01'),VEHICLES[0],stock).ok);assert.equal(entryCheck(mission('m04'),VEHICLES[0],stock).ok,false);const s=createSession(mission('m04'),VEHICLES[0],stock);assert.equal(s.status,'failed');assert.match(s.reason,/motor nível 1/);assert.equal(entryCheck(mission('m04'),VEHICLES[0],{...stock,engine:1}).ok,false);assert.ok(entryCheck(mission('m04'),VEHICLES[0],{...stock,engine:1,brakes:1}).ok);});
-test('later chapters enforce capacity, brakes and final performance rating',()=>{assert.equal(entryCheck(mission('m14'),VEHICLES[0],{...stock,engine:2,brakes:2}).ok,false);assert.equal(entryCheck(mission('m19'),VEHICLES[2],{...stock,engine:2,brakes:1}).ok,false);assert.equal(entryCheck(mission('m29'),VEHICLES.find(v=>v.id==='peregrino'),{...stock,engine:2,brakes:2}).ok,false);assert.ok(entryCheck(mission('m29'),VEHICLES.find(v=>v.id==='falcao'),{...stock,engine:2,brakes:2}).ok);assert.equal(requirementsFor(mission('m29')).speed,130);});
-test('rivals have progressively higher finite speed caps and distinct vehicles',()=>{const profiles=CONTRACTS.filter(c=>c.race).map(rivalProfile);for(let i=1;i<profiles.length;i++)assert.ok(profiles[i].max>profiles[i-1].max);assert.equal(new Set(profiles.map(p=>p.vehicleId)).size,3);for(const p of profiles)assert.ok(p.max<140&&p.accel>0&&p.grip>0);});
+test('qualquer caminhão da frota pode largar até mesmo sem upgrades',()=>{
+ for(const c of [mission('m01'),mission('m03'),mission('m04'),mission('m29')]){
+  const check=entryCheck(c,VEHICLES[0],stock);
+  assert.equal(check.ok,true);
+  assert.equal(createSession(c,VEHICLES[0],stock).status,'running');
+  if(c.id==='m29')assert.ok(check.missing.length>0);
+ }
+ assert.match(entryCheck(mission('m04'),VEHICLES[0],stock).advice,/opcionais/);
+});
+test('capítulos finais sugerem equipamentos sem bloquear a largada',()=>{
+ for(const vehicle of VEHICLES)for(const c of [mission('m14'),mission('m19'),mission('m29')])
+  assert.equal(entryCheck(c,vehicle,stock).ok,true);
+ assert.equal(requirementsFor(mission('m29')).speed,130);
+});
+test('rivals have progressively higher finite speed caps and distinct vehicles',()=>{const profiles=CONTRACTS.filter(c=>c.race).map(rivalProfile);for(let i=1;i<profiles.length;i++)assert.ok(profiles[i].max>profiles[i-1].max);assert.equal(new Set(profiles.map(p=>p.vehicleId)).size,3);assert.equal(profiles[0].max,130);for(const p of profiles)assert.ok(p.max>=130&&p.max<=155&&p.accel>0&&p.grip>0);});
 test('freight time bonus is capped, requires quality and never applies to duels or failures',()=>{const c=mission('m01'),base={cargo:100,healthLost:0,elapsed:50};assert.equal(freightTimeBonus(c,base),c.pay*.2);assert.ok(freightTimeBonus(c,{...base,elapsed:140})>0);assert.equal(freightTimeBonus(c,{...base,elapsed:c.time}),0);assert.equal(freightTimeBonus(c,{...base,cargo:89}),0);assert.equal(freightTimeBonus(c,{...base,healthLost:6}),0);assert.equal(freightTimeBonus(mission('m04'),base),0);assert.equal(settlement(c,{...base,elapsed:c.time+1,fuelUsed:0}).timeBonus,0);});
 test('time bonus enters the payout exactly once',()=>{const c=mission('m01'),s=freshSave(),run=replay(c,VEHICLES[0],stock),r=resolveSession(run,s),balance=s.money;assert.ok(r.timeBonus>0);assert.equal(r.net,r.gross+r.timeBonus-r.fuel-r.repairs-r.toll);assert.equal(resolveSession(run,s),r);assert.equal(s.money,balance);});
 test('speedometer is monotonic and clamped; rectangular map puts upcoming points above the player',()=>{assert.equal(speedAngle(-1),speedAngle(0));assert.equal(speedAngle(200),speedAngle(160));assert.ok(speedAngle(100)>speedAngle(50));const window={minX:-20,maxX:20,start:0,end:500},a=mapPoint(50,0,window,260,155),b=mapPoint(450,0,window,260,155);assert.equal(a.x,b.x);assert.ok(a.y>b.y);assert.ok(a.x>0&&a.x<260&&b.y>0&&a.y<155);});

@@ -15,7 +15,7 @@ export function createSession(contract,vehicle,parts){
   speed:i%3===0?-13:10+i%4*1.2,cruise:i%3===0?13:10+i%4*1.2,
   direction:i%3===0?-1:1,x:i%3===0?3.4:-3.4,cooldown:0
  }));
- return {contract,vehicle,parts:{...parts},run,traffic,rival:contract.race?{s:0,speed:0,x:3.4,length:VEHICLES.find(v=>v.id===rivalProfile(contract).vehicleId).length,laneTarget:3.4,hitCooldown:0,hits:0}:null,status:entryCheck(contract,vehicle,parts).ok?'running':'failed',reason:entryCheck(contract,vehicle,parts).reason||null,events:[],hitCooldown:0,accumulator:0,hits:0,boosts:0,result:null};
+ return {contract,vehicle,parts:{...parts},run,traffic,rival:contract.race?{s:0,speed:0,x:3.4,length:VEHICLES.find(v=>v.id===rivalProfile(contract).vehicleId).length,laneTarget:3.4,hitCooldown:0,hits:0}:null,status:'running',reason:null,events:[],hitCooldown:0,accumulator:0,hits:0,boosts:0,result:null};
 }
 function failure(run,contract){
  if(run.health<=0)return 'O caminhão precisa de reparos. Seu Nilo mandou o resgate.';
@@ -30,7 +30,7 @@ export function stepSession(session,input,dt=FIXED_STEP){
  const previous={s:run.s,x:run.x},rivalPrevious=rival?{s:rival.s,x:rival.x}:null;
  // Respect the exact deadline; crossing at the deadline still counts.
  const step=Math.min(dt,Math.max(0,contract.time-run.elapsed));
- if(step<=1e-9){end(session,false,'O prazo do contrato terminou. Prepare-se para uma nova tentativa.');return;}
+ if(step<=1e-9){end(session,false,'O prazo terminou. Experimente melhorar motor ou freios e escolher a melhor trajetória.');return;}
  driveStep(run,input,vehicle,parts,contract,step);
  if(vehicle.category==='tractor'){const target=clamp(Math.atan(roadSlope(run.s,route))-Math.atan(roadSlope(run.s-8,route))+(run.steering||0),-.45,.45);run.trailerYaw+=(target-run.trailerYaw)*(1-Math.exp(-step*Math.max(.5,Math.abs(run.speed)/7)));}
  session.hitCooldown=Math.max(0,session.hitCooldown-step);
@@ -74,7 +74,7 @@ export function stepSession(session,input,dt=FIXED_STEP){
  if(rival){const rivalCrossed=crossingFraction(rivalPrevious,rival,contract.length);if(Number.isFinite(crossed)&&crossed<=rivalCrossed){run.won=true;end(session,true);return;}if(Number.isFinite(rivalCrossed)){run.won=false;end(session,false,(contract.rival||'Coiote')+' cruzou a linha primeiro. Treine as curvas e tente a revanche.');return;}}
  else if(Number.isFinite(crossed)){end(session,true);return;}
  if(run.s>contract.length+45){end(session,false,'Você passou ao lado da entrega. Cruze o portal verde por dentro da pista.');return;}
- if(run.elapsed>=contract.time-1e-9)end(session,false,'O prazo do contrato terminou. Prepare-se para uma nova tentativa.');
+ if(run.elapsed>=contract.time-1e-9)end(session,false,'O prazo terminou. Experimente melhorar motor ou freios e escolher a melhor trajetória.');
 }
 export function advanceSession(session,input,seconds){
  session.events=[];if(session.status!=='running')return;

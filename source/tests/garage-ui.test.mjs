@@ -112,3 +112,11 @@ test('comparação, configuração e botões continuam funcionais com o novo vis
  assert.match(css,/\.garage-details::-webkit-scrollbar-thumb/);
  assert.match(css,/\.garage-use-button\.is-equipped:disabled/);
 });
+
+test('o cronômetro é o desafio e o tuning é opção, sem bloqueio de entrada',()=>{
+ assert.match(code,/Oficina \(opcional\): motor N/);
+ assert.match(code,/Não existe nível mínimo de motor, freios, velocidade ou capacidade para largar/);
+ assert.match(code,/TUNAR NA OFICINA \(OPCIONAL\)/);
+ assert.match(code,/\$\('start'\)\.disabled=false/);
+ assert.doesNotMatch(code,/if\(!gate\.ok\)/);
+});

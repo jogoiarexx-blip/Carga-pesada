@@ -1,5 +1,5 @@
-/* Carga Pesada v0.38 - recursos do jogo disponíveis offline após o primeiro acesso. */
-const CACHE='carga-pesada-offline-v0.38-dificuldade';
+/* Carga Pesada v0.39 - recursos do jogo disponíveis offline após o primeiro acesso. */
+const CACHE='carga-pesada-offline-v0.39-desafio-livre';
 const PREFIX='carga-pesada-offline-';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./icons/carga-pesada.svg',

@@ -9,6 +9,8 @@ const get=n=>CONTRACTS.find(c=>c.id==='m'+String(n).padStart(2,'0'));
 test('o prólogo mantém tráfego inicial e a primeira mecânica apresenta freios na serra',()=>{
  assert.equal(missionDifficulty(get(1)).tier,0);
  assert.equal(get(1).time,180);
+ assert.equal(get(2).time,170);
+ assert.equal(get(3).time,195);
  assert.equal(createSession(get(1),VEHICLES[0],{health:100,engine:0,brakes:0}).traffic.length,16);
  assert.equal(requirementsFor(get(2)).brakes,0);
  assert.equal(requirementsFor(get(3)).brakes,1);
@@ -32,13 +34,14 @@ test('capítulos avançados aumentam tráfego, carga mínima e rigidez do prazo'
  assert.equal(get(30).min,86);
  assert.equal(missionDifficulty(get(30)).trafficCount,26);
 });
-test('um caminhão sem preparar motor e freios não entra nas missões técnicas',()=>{
- const aurora=VEHICLES[0],baseline={health:100,engine:0,brakes:0};
- assert.equal(entryCheck(get(3),aurora,baseline).ok,false);
- assert.equal(entryCheck(get(3),aurora,{...baseline,brakes:1}).ok,true);
- assert.equal(entryCheck(get(4),aurora,{...baseline,engine:1,brakes:1}).ok,true);
- assert.equal(entryCheck(get(9),aurora,{...baseline,engine:1,brakes:1}).ok,false);
- assert.equal(entryCheck(get(9),aurora,{...baseline,engine:2,brakes:1}).ok,true);
+test('o tuning é opcional, embora a oficina recomende melhorias',()=>{
+ const aurora=VEHICLES[0],stock={health:100,engine:0,brakes:0};
+ for(const n of [3,4,9,14,19,29]){
+  const c=get(n),check=entryCheck(c,aurora,stock);
+  assert.equal(check.ok,true);
+  assert.equal(createSession(c,aurora,stock).status,'running');
+  assert.ok(check.missing.length>0);
+ }
 });
 test('todos os fretes avançados permanecem resolvíveis com frota e melhorias exigidas',()=>{
  for(const c of [get(5),get(10),get(15),get(20),get(25),get(30)]){
