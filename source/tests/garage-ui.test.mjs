@@ -27,3 +27,14 @@ test('cenário 3D carrega somente na garagem e sai da frente durante a viagem',(
  assert.match(code,/workshopScene\.visible=visible/);
  assert.match(css,/body\[data-screen="garage"\] \.garage-stage\{\s*background:transparent!important/);
 });
+
+test('novo zoom adaptativo e efeitos respondem apenas às compras confirmadas',()=>{
+ assert.match(code,/workshopAutoDistance\(base\)/);
+ assert.match(code,/workshopCameraDistance\(/);
+ assert.match(code,/beginWorkshopService\(workshopScene,kind\)/);
+ assert.match(code,/updateWorkshopService\(workshopScene,dt\)/);
+ assert.match(code,/if\(commitGarage\(draft=>repairTruck/);
+ assert.match(code,/showWorkshopService\('repair'\)/);
+ assert.match(html,/id="fitModel"/);
+ assert.match(html,/id="previewZoom" type="range" min="14" max="70"/);
+});

@@ -25,7 +25,8 @@ import {pageHash,pageFromHash} from './navigation.mjs';
 import {PRESETS,ACCESSORIES,normalizeDecoration,saveDecoration} from './decoration.mjs';
 import {decorateTruck,animateDecoration} from './truck-decoration.mjs';
 import {studioEnvironment,addContactShadow} from './truck-studio.mjs';
-import {createWorkshopScene,setWorkshopQuality} from './workshop-scene.mjs';
+import {createWorkshopScene,setWorkshopQuality,configureWorkshopVehicle,beginWorkshopService,updateWorkshopService} from './workshop-scene.mjs';
+import {workshopCameraDistance} from './workshop-camera.mjs';
 import {importArt} from './art-store.mjs';
 const $=id=>document.getElementById(id),money=n=>'CR$ '+Math.round(n).toLocaleString('pt-BR');
 let savedRaw=null;try{savedRaw=localStorage.getItem('carga-pesada-v1');}catch{}
@@ -34,7 +35,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.30';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.31';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -112,7 +113,8 @@ function updateGaragePreview(reset=false){
  const base=VEHICLES.find(v=>v.id===previewId);if(!base.bodyOptions.includes(previewBody))previewBody=save.fleet[previewId]?.body||base.defaultBody;
  if(reset){decorationEpoch++;draftDecoration=normalizeDecoration(save.fleet[previewId]?.decoration);}
  replacePlayer(previewId,previewBody);player.rotation.y=0;if(paintChoice)player.userData.paint.color.set(paintChoice);
- if(reset){previewDistance=Math.max(17,base.length*1.45);previewAngle=2.45;previewSpin=false;}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
+ if(workshopScene)configureWorkshopVehicle(workshopScene,base);
+ if(reset){previewAngle=2.45;previewSpin=false;previewDistance=workshopAutoDistance(base);}syncGarageCameraButtons();$('previewZoom').value=previewDistance;renderGarageDetails();
 }
 function vehicleIcon(v,color){const hood=v.cab==='classic'||v.cab==='aero',rear=v.category==='tractor'?94:88;return `<svg viewBox="0 0 120 50" aria-hidden="true"><path d="M2 41H117" stroke="#a6b294" opacity=".4"/><path d="${hood?'M5 33V24L20 22L25 12H43V35H5Z':'M6 35V15L12 10H33V35Z'}" fill="${color}" stroke="#ced2ab" stroke-width=".7"/><path d="${hood?'M24 22L28 15H38V23Z':'M11 16H27V24H11Z'}" fill="#142c28"/><path d="M${hood?45:36} 14H112V34H${hood?45:36}Z" fill="${v.defaultBody==='tarp_trailer'?'#bb853b':'#a4b5a3'}" stroke="#d4d6bc" stroke-width=".7"/><path d="M44 34H114V38H26V34" fill="#102a24"/><g fill="#10231e" stroke="#b9c2ac" stroke-width="1.2"><circle cx="17" cy="38" r="6"/><circle cx="${rear-5}" cy="38" r="6"/>${v.axles>2||v.category==='tractor'?`<circle cx="${rear+9}" cy="38" r="6"/>`:''}</g></svg>`;}
 function renderGarage(){
@@ -134,6 +136,17 @@ function commitGarage(action){
  save=result.save;$('balance').textContent=money(save.money);
  refreshGarage();return true;
 }
+function workshopAutoDistance(vehicle,angle=previewAngle){
+ const rect=$('garageStage').getBoundingClientRect();
+ return workshopCameraDistance(vehicle,rect.width||800,rect.height||600,angle);
+}
+function fitWorkshopPreview(){
+ const vehicle=VEHICLES.find(v=>v.id===previewId);
+ if(!vehicle)return;
+ previewDistance=workshopAutoDistance(vehicle);
+ $('previewZoom').value=previewDistance;
+}
+function showWorkshopService(kind){if(mode==='garage'&&workshopScene)beginWorkshopService(workshopScene,kind);}
 function syncGarageCameraButtons(){document.querySelectorAll('[data-camera-view]').forEach(button=>button.setAttribute('aria-pressed',String(!previewSpin&&Math.abs(previewAngle-Number(button.dataset.cameraView))<.025)));}
 
 function renderGarageDetails(){
@@ -150,14 +163,14 @@ function renderGarageDetails(){
  if(document.querySelector('.workshop-services'))document.querySelector('.workshop-services').ontoggle=e=>serviceOpen=e.currentTarget.open;
  bindDecorationControls();
  $('bodyPreview').onchange=e=>{previewBody=e.target.value;updateGaragePreview();};
- if($('installBody'))$('installBody').onclick=()=>{if(commitGarage(draft=>equipBody(draft,previewBody,previewId)))toast('Carroceria instalada no '+v.name+'.');};
+ if($('installBody'))$('installBody').onclick=()=>{if(commitGarage(draft=>equipBody(draft,previewBody,previewId))){showWorkshopService('body');toast('Carroceria instalada no '+v.name+'.');}};
  if($('useTruck'))$('useTruck').onclick=()=>{if(commitGarage(draft=>{if(!draft.fleet[previewId])return false;draft.selected=previewId;return true;}))toast(v.name+' pronto para a estrada.');};
  if($('buyTruck'))$('buyTruck').onclick=()=>{if(commitGarage(draft=>purchase(draft,previewId))){previewBody=save.fleet[previewId].body;toast(v.name+' adicionado à sua frota.');}};
  if($('openWorkshop'))$('openWorkshop').onclick=()=>{garageTab='workshop';serviceOpen=true;paintChoice=null;renderGarage();updateGaragePreview();};
- if($('repairTruck'))$('repairTruck').onclick=()=>{if(commitGarage(draft=>repairTruck(draft,previewId)))toast('Reparação concluída.');};
- document.querySelectorAll('[data-service]').forEach(button=>button.onclick=()=>{if(commitGarage(draft=>installUpgrade(draft,previewId,button.dataset.service)))toast('Melhoria instalada no '+v.name+'.');});
+ if($('repairTruck'))$('repairTruck').onclick=()=>{if(commitGarage(draft=>repairTruck(draft,previewId))){showWorkshopService('repair');toast('Reparação concluída.');}};
+ document.querySelectorAll('[data-service]').forEach(button=>button.onclick=()=>{if(commitGarage(draft=>installUpgrade(draft,previewId,button.dataset.service))){showWorkshopService(button.dataset.service);toast('Melhoria instalada no '+v.name+'.');}});
  document.querySelectorAll('[data-paint]').forEach(button=>button.onclick=()=>{paintChoice=button.dataset.paint;player.userData.paint.color.set(paintChoice);renderer.colors?.delete(player.userData.paint);renderGarageDetails();});
- if($('applyPaint'))$('applyPaint').onclick=()=>{if(commitGarage(draft=>repaintTruck(draft,previewId,paintChoice))){paintChoice=null;updateGaragePreview();toast('Pintura aplicada no '+v.name+'.');}};
+ if($('applyPaint'))$('applyPaint').onclick=()=>{if(commitGarage(draft=>repaintTruck(draft,previewId,paintChoice))){paintChoice=null;updateGaragePreview();showWorkshopService('paint');toast('Pintura aplicada no '+v.name+'.');}};
 }
 let workshopPanel='parts',partGroup='Todas',serviceOpen=true;
 function checkoutUI(){if(!$('applyDecoration'))return;const q=quoteParts(save,previewId,draftDecoration),button=$('applyDecoration');button.disabled=!q.valid||!!q.reason;button.textContent=!q.valid?'ADQUIRA O CAMINHÃO PARA EQUIPAR':q.cost?'COMPRAR E EQUIPAR · '+money(q.cost):'EQUIPAR PEÇAS ADQUIRIDAS';$('checkoutCost').textContent=q.valid?(q.items.length+' nova(s) peça(s) · '+money(q.cost)):'Prévia de caminhão da loja';$('checkoutNote').textContent=q.reason||'Peças adquiridas continuam neste caminhão mesmo quando removidas.';}
@@ -179,7 +192,7 @@ function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorati
  document.querySelectorAll('[data-accessory]').forEach(input=>input.onchange=()=>{draftDecoration.accessories[input.dataset.accessory]=input.checked;redraw();$('decorationStatus').textContent='Peças na prévia. Salve para equipar neste caminhão.';});
  $('dekoSignText').oninput=e=>{draftDecoration.signText=normalizeDecoration({signText:e.target.value}).signText;redraw();};
 
- $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;const quote=quoteParts(save,previewId,draftDecoration);if(!quote.valid||quote.reason){toast(quote.reason||'Não foi possível equipar.');return;}if(commitGarage(draft=>saveDecoration(draft,previewId,draftDecoration))){$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');}};
+ $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;const quote=quoteParts(save,previewId,draftDecoration);if(!quote.valid||quote.reason){toast(quote.reason||'Não foi possível equipar.');return;}if(commitGarage(draft=>saveDecoration(draft,previewId,draftDecoration))){showWorkshopService('parts');$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');}};
 }
 window.addEventListener('art-error',event=>toast(event.detail));
 function persist(){try{localStorage.setItem('carga-pesada-v1',JSON.stringify(save));}catch{if(!saveWarned){toast('Não foi possível salvar neste navegador.');saveWarned=true;}return false;}$('balance').textContent=money(save.money);return true;}
@@ -322,7 +335,14 @@ const forward=new THREE.Vector3(center(visual.s+1)-center(visual.s),0,-1).normal
 if(hudCanvasDue(clock,nextHudPaint)){drawSpeedometer($('speedometer'),Math.abs(run.speed)*3.6);drawMinimap($('minimap'),run,mission,center,session.traffic,session.rival);nextHudPaint=clock+.1;}$('speed').textContent=Math.round(Math.abs(run.speed)*3.6);$('speedometer').setAttribute('aria-label','Velocidade '+Math.round(Math.abs(run.speed)*3.6)+' km/h');$('remaining').textContent=(Math.max(0,mission.length-run.s)/1000).toFixed(2)+' km restantes';$('timer').textContent=formatTime(mission.time-run.elapsed);$('routeProgress').style.width=clamp(run.s/mission.length*100,0,100)+'%';for(const [name,value] of [['cargo',run.cargo],['health',run.health],['fuel',run.fuel]]){$(name+'Value').textContent=Math.round(value)+'%';$(name+'Bar').style.width=value+'%';$(name+'Bar').style.background=value<35?'#d87d52':'#b6c48c';}if(clock>radioTimer)$('radio').classList.add('hidden');sounds?.update(run.speed);
 }else if(mode==='cinematic'){updateCinematic(dt);
 }else if(mode==='garage'||mode==='home'){
- const isGarage=mode==='garage';if(isGarage&&previewSpin)previewAngle+=dt*.24;
+ const isGarage=mode==='garage';
+  if(isGarage&&previewSpin)previewAngle+=dt*.24;
+  if(isGarage&&workshopScene){
+   const effect=updateWorkshopService(workshopScene,dt);
+   player.position.y=workshopScene.position.y+effect.lift;
+   const contact=player.children.find(o=>o.userData.contactShadow);
+   if(contact)contact.position.y=.015-effect.lift;
+  }
  const distance=isGarage?previewDistance:Math.max(17,player.userData.spec.length*1.4),angle=isGarage?previewAngle:2.38;
  const target=player.position.clone().add(new THREE.Vector3(0,1.85,0));
  const desired=target.clone().add(new THREE.Vector3(Math.sin(angle)*distance,distance*.2,Math.cos(angle)*distance));camera.position.lerp(desired,1-Math.exp(-dt*6));camera.lookAt(target);sun.position.copy(player.position.clone().add(new THREE.Vector3(-20,30,-15)));sun.target.position.copy(player.position);sun.target.updateMatrixWorld();
@@ -343,10 +363,11 @@ $('continue').onclick=()=>brief(CONTRACTS.find(c=>c.id===nextMission(save))||CON
  $('closeMenuPanel').onclick=closeMenuPanel;
  document.querySelectorAll('[data-garage-tab]').forEach(button=>button.onclick=()=>{garageTab=button.dataset.garageTab;if(garageTab==='workshop')serviceOpen=true;paintChoice=null;renderGarage();updateGaragePreview(true);});
  $('previewZoom').oninput=e=>previewDistance=Number(e.target.value);
+ $('fitModel').onclick=()=>{previewSpin=false;$('spinModel').setAttribute('aria-pressed','false');fitWorkshopPreview();syncGarageCameraButtons();};
  $('rotateLeft').onclick=()=>{previewSpin=false;previewAngle-=.35;syncGarageCameraButtons();};
  $('rotateRight').onclick=()=>{previewSpin=false;previewAngle+=.35;syncGarageCameraButtons();};
- $('spinModel').onclick=()=>{previewSpin=!previewSpin;$('spinModel').setAttribute('aria-pressed',previewSpin?'true':'false');syncGarageCameraButtons();};
- document.querySelectorAll('[data-camera-view]').forEach(button=>button.onclick=()=>{previewSpin=false;previewAngle=Number(button.dataset.cameraView);$('spinModel').setAttribute('aria-pressed','false');syncGarageCameraButtons();});
+ $('spinModel').onclick=()=>{previewSpin=!previewSpin;if(previewSpin)previewDistance=Math.max(previewDistance,workshopAutoDistance(VEHICLES.find(v=>v.id===previewId),Math.PI/2));$('previewZoom').value=previewDistance;$('spinModel').setAttribute('aria-pressed',previewSpin?'true':'false');syncGarageCameraButtons();};
+ document.querySelectorAll('[data-camera-view]').forEach(button=>button.onclick=()=>{previewSpin=false;previewAngle=Number(button.dataset.cameraView);$('spinModel').setAttribute('aria-pressed','false');fitWorkshopPreview();syncGarageCameraButtons();});
  const garageStage=$('garageStage');let garageDrag=null;
  garageStage.addEventListener('pointerdown',event=>{if(mode!=='garage'||event.target.closest('button,label,input'))return;garageDrag={id:event.pointerId,x:event.clientX,angle:previewAngle};garageStage.setPointerCapture?.(event.pointerId);});
  garageStage.addEventListener('pointermove',event=>{if(!garageDrag||event.pointerId!==garageDrag.id)return;previewSpin=false;previewAngle=garageDrag.angle+(garageDrag.x-event.clientX)*.009;$('spinModel').setAttribute('aria-pressed','false');syncGarageCameraButtons();});

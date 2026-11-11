@@ -217,3 +217,16 @@ body[data-screen="garage"] .stage-note{
 body[data-screen="garage"] .stage-controls,
 body[data-screen="garage"] .stage-presets{z-index:6}
 body[data-screen="garage"] .stage-tag{z-index:6}
+
+/* REV21: enquadramento rápido, feedback de serviço sem travar a interface. */
+body[data-screen="garage"] #fitModel{background:#d0ab61;color:#10271f;font-weight:700;border-color:#efd19a}
+body[data-screen="garage"] .stage-controls{row-gap:6px}
+@media(max-width:800px){
+ body[data-screen="garage"] .garage-stage{min-height:252px;height:252px}
+ body[data-screen="garage"] .stage-controls button{font-size:10px;min-height:34px;padding:7px 9px}
+ body[data-screen="garage"] .stage-controls label{font-size:10px}
+}
+@media(max-width:390px){
+ body[data-screen="garage"] .stage-controls{gap:4px}
+ body[data-screen="garage"] .stage-controls button{padding:6px 7px;font-size:9px}
+}

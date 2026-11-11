@@ -139,6 +139,42 @@ export function createWorkshopScene(){
    sign.position.set(0,7.4,-42.52);sign.name='placa-oficina-farol';structural.add(sign);
   }
  }
+ // Elevador de inspeção e carrinho de ferramentas: aparece somente durante o serviço.
+ const serviceRig=new THREE.Group();serviceRig.name='animacao-servico';serviceRig.visible=false;root.add(serviceRig);
+ const platform=new THREE.Group();platform.name='plataforma-elevador';serviceRig.add(platform);
+ const railMat=new THREE.MeshStandardMaterial({color:'#c3a34e',roughness:.6,metalness:.2});
+ const rails=[];
+ for(const x of [-1.42,1.42]){
+  const rail=new THREE.Mesh(new THREE.BoxGeometry(.3,.2,1),railMat);
+  rail.name='trilho-elevador';rail.position.x=x;platform.add(rail);rails.push(rail);
+ }
+ const trolley=new THREE.Group();trolley.name='carrinho-ferramentas';serviceRig.add(trolley);
+ trolley.position.set(-4.3,0,-2.5);
+ const trolleyBase=new THREE.Mesh(new THREE.BoxGeometry(1.3,1.1,.75),materials.red);
+ trolleyBase.position.y=.75;trolley.add(trolleyBase);
+ const trolleyTop=new THREE.Mesh(new THREE.BoxGeometry(1.45,.14,.9),materials.chrome);
+ trolleyTop.position.y=1.38;trolley.add(trolleyTop);
+ for(const dz of [-.27,.27])for(const dx of [-.48,.48]){
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.12,8),materials.dark);
+  wheel.rotation.z=Math.PI/2;wheel.position.set(dx,.15,dz);trolley.add(wheel);
+ }
+ const spray=new THREE.Mesh(new THREE.ConeGeometry(.85,2.2,8),new THREE.MeshBasicMaterial({
+  color:'#9be7f0',transparent:true,opacity:.25,depthWrite:false,side:THREE.DoubleSide
+ }));
+ spray.name='nevoa-pintura';spray.position.set(-3.2,2.2,-1.7);spray.rotation.z=-Math.PI/2;spray.visible=false;serviceRig.add(spray);
+ const sparks=new THREE.Group();sparks.name='ferramentas-em-acao';serviceRig.add(sparks);
+ const sparkMat=new THREE.MeshBasicMaterial({color:'#ffe1a0'});
+ for(let i=0;i<5;i++){
+  const spark=new THREE.Mesh(new THREE.BoxGeometry(.06,.12,.06),sparkMat);
+  spark.position.set(-2.8,1.2,-1.8);sparks.add(spark);
+ }
+ root.userData.serviceRig=serviceRig;
+ root.userData.servicePlatform=platform;
+ root.userData.serviceRails=rails;
+ root.userData.serviceTrolley=trolley;
+ root.userData.serviceSpray=spray;
+ root.userData.serviceSparks=sparks;
+ root.userData.service=null;
  root.userData.detailGroup=details;root.userData.serviceLight=point;
  setWorkshopQuality(root,'balanced');
  return root;
@@ -147,4 +183,58 @@ export function setWorkshopQuality(root,preset='balanced'){
  if(!root)return;
  root.userData.detailGroup.visible=preset!=='eco';
  root.userData.serviceLight.visible=preset==='high';
+ root.userData.quality=preset;
+ if(root.userData.serviceSparks)root.userData.serviceSparks.visible=preset!=='eco'&&!!root.userData.service&&root.userData.service.type!=='paint';
+}
+
+
+// Muda apenas dimensões e posição do equipamento; nunca recria o caminhão.
+export function configureWorkshopVehicle(root,vehicle){
+ if(!root||!vehicle)return;
+ const length=Math.min(18.5,Math.max(6,Number(vehicle.length)||8));
+ const railLength=Math.min(length*.64,11);
+ const railZ=vehicle.category==='tractor'?-Math.min(3,length*.22):0;
+ for(const rail of root.userData.serviceRails){
+  rail.scale.z=railLength;rail.position.z=railZ;
+ }
+ root.userData.serviceTrolley.position.z=railZ-3;
+ root.userData.serviceSpray.position.z=-length*.2;
+ root.userData.serviceSparks.position.z=-length*.24;
+}
+
+// Animações breves, sem timers nem física: elevador, ferramentas ou pulverização.
+export function beginWorkshopService(root,type='repair'){
+ if(!root)return false;
+ if(!['repair','engine','brakes','body','paint','parts'].includes(type))return false;
+ const rig=root.userData.serviceRig;
+ root.userData.service={type,elapsed:0,duration:type==='paint'?2.0:1.65};
+ rig.visible=true;
+ root.userData.serviceSpray.visible=type==='paint';
+ root.userData.serviceTrolley.visible=type!=='paint';
+ root.userData.servicePlatform.visible=type!=='paint';
+ root.userData.serviceSparks.visible=type!=='paint'&&root.userData.quality!=='eco';
+ return true;
+}
+export function updateWorkshopService(root,dt){
+ if(!root?.userData.service)return {active:false,lift:0};
+ const state=root.userData.service;
+ state.elapsed=Math.min(state.duration,state.elapsed+Math.max(0,Math.min(.2,Number(dt)||0)));
+ const t=state.elapsed/state.duration;
+ const envelope=Math.sin(Math.PI*t)**2;
+ const lift=state.type==='paint'?0:.30*envelope;
+ root.userData.servicePlatform.position.y=.11+lift;
+ root.userData.serviceTrolley.position.x=-4.3+envelope*.5;
+ root.userData.serviceSpray.material.opacity=.12+.25*envelope;
+ root.userData.serviceSpray.rotation.y=t*Math.PI*1.6;
+ root.userData.serviceSparks.children.forEach((o,i)=>{
+  const a=i*1.256+t*10;
+  o.position.set(-2.8+Math.sin(a)*(.2+.35*envelope),1.2+Math.cos(a)*(.1+.4*envelope),Math.cos(a*1.3)*.2);
+ });
+ if(state.elapsed>=state.duration){
+  root.userData.serviceRig.visible=false;
+  root.userData.service=null;
+  root.userData.servicePlatform.position.y=0;
+  return {active:false,lift:0};
+ }
+ return {active:true,lift};
 }
