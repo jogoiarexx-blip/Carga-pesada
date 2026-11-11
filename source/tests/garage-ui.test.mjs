@@ -120,3 +120,11 @@ test('o cronômetro é o desafio e o tuning é opção, sem bloqueio de entrada'
  assert.match(code,/\$\('start'\)\.disabled=false/);
  assert.doesNotMatch(code,/if\(!gate\.ok\)/);
 });
+
+
+test('catálogo de motores mostra seis estágios, preços e ganhos sem exigências',()=>{
+ assert.match(code,/renderEngineCatalog\(v,truck,save\.money,money\)/);
+ assert.match(code,/engineTopSpeed\(v,truck\?\.engine\|\|0\)/);
+ assert.match(code,/data-service="brakes"/);
+ assert.match(css,/REV34 — catálogo de 6 motores/);
+});

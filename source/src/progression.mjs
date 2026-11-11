@@ -1,8 +1,9 @@
+import {engineTopSpeed} from './engine-tuning.mjs';
 export function requirementsFor(contract){const n=Number(contract.id.slice(1));if(n<=2)return {capacity:3,engine:0,brakes:0};if(n===3)return {capacity:3,engine:0,brakes:1};if(n===4)return {capacity:3,engine:1,brakes:1};if(n<=8)return {capacity:3,engine:1,brakes:1};if(n===9)return {capacity:3,engine:2,brakes:1};if(n<=13)return {capacity:5,engine:1,brakes:1};if(n===14)return {capacity:5,engine:2,brakes:2};if(n<=18)return {capacity:12,engine:1,brakes:1};if(n===19)return {capacity:12,engine:2,brakes:2};return {capacity:18,engine:n>=24?2:1,brakes:2,speed:n>=24?130:0};}
 // A preparação é apenas uma recomendação: qualquer caminhão pode tentar a fase.
 export function entryCheck(contract,vehicle,parts){
  const r=requirementsFor(contract),engine=Number(parts?.engine)||0,brakes=Number(parts?.brakes)||0,missing=[];
- if(vehicle.max+engine*12<(r.speed||0))missing.push('mais velocidade de reta');
+ if(engineTopSpeed(vehicle,engine)<(r.speed||0))missing.push('mais velocidade de reta');
  if(vehicle.capacity<r.capacity)missing.push('caminhão com mais capacidade de carga');
  if(engine<r.engine)missing.push('motor N'+r.engine+' recomendado');
  if(brakes<r.brakes)missing.push('freios N'+r.brakes+' recomendados');

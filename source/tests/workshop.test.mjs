@@ -11,3 +11,19 @@ test('painting only commits on explicit valid operation and charges once',()=>{c
 test('invalid, unowned and unaffordable services cannot charge or mutate',()=>{const s=freshSave(),before=JSON.stringify(s);assert.equal(installUpgrade(s,'aurora','engine'),false);assert.equal(repaintTruck(s,'imperador','#b84c3c'),false);assert.equal(repaintTruck(s,'aurora','invalid'),false);assert.equal(repairTruck(s,'falcao'),false);assert.equal(equipBody(s,'tarp_trailer','peregrino'),false);assert.equal(JSON.stringify(s),before);});
 test('body installation targets a parked tractor and preserves selected Aurora',()=>{const s=fleet(),before=s.money;assert.ok(equipBody(s,'tarp_trailer','peregrino'));assert.equal(s.selected,'aurora');assert.equal(s.fleet.peregrino.body,'tarp_trailer');assert.equal(s.money,before-800);});
 test('all menu pages have stable direct hashes and unknown links return home',()=>{for(const page of ['home','contracts','garage'])assert.equal(pageFromHash(pageHash(page)),page);assert.equal(pageHash('garage'),'#garagem');assert.equal(pageFromHash('#garagem'),'garage');assert.equal(pageFromHash('#old-modal'),'home');});
+
+
+test('a oficina aceita seis motores por caminhão sem alterar os freios',()=>{
+ const s=fleet(),id='aurora',originalBrakes=s.fleet[id].brakes;
+ s.money=200000;
+ for(let level=1;level<=6;level++){
+  const previous=s.money;
+  assert.equal(installUpgrade(s,id,'engine'),true);
+  assert.equal(s.fleet[id].engine,level);
+  assert.equal(s.money,previous-2000*2**(level-1));
+ }
+ assert.equal(s.fleet[id].brakes,originalBrakes);
+ const remaining=s.money;
+ assert.equal(installUpgrade(s,id,'engine'),false);
+ assert.equal(s.money,remaining);
+});

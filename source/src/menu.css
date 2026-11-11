@@ -572,3 +572,25 @@ body[data-screen="garage"] .garage-actions .disabled-note{color:#bfceb6;font-siz
  background:linear-gradient(100deg,#153d32e8,#122b25dc);
  color:#f0dec0;font-size:12px;line-height:1.65}
 .contract-requirements{line-height:1.6}
+
+
+/* REV34 — catálogo de 6 motores com progressão exponencial por caminhão. */
+body[data-screen="garage"] .engine-catalog{padding:13px 10px 11px;border:1px solid #b9a16685;border-radius:11px;background:linear-gradient(150deg,#173c30,#0b2d25 75%);box-shadow:inset 0 1px 0 #ffecb022}
+body[data-screen="garage"] .engine-catalog-header{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#f0d69d}
+body[data-screen="garage"] .engine-catalog-header strong{font-size:11px;letter-spacing:1.35px}
+body[data-screen="garage"] .engine-catalog-header span{border-radius:16px;border:1px solid #d9b675;padding:5px 9px;font-size:11px;white-space:nowrap}
+body[data-screen="garage"] .engine-catalog .workshop-note{margin:10px 0 12px;color:#d2d8c1;font-size:10px}
+body[data-screen="garage"] .engine-stage-list{display:grid;gap:8px}
+body[data-screen="garage"] .engine-stage{padding:10px;border:1px solid #77947b63;border-radius:9px;background:#12352be8;min-width:0}
+body[data-screen="garage"] .engine-stage.next{border-color:#efbd63;background:linear-gradient(115deg,#294933,#163a2e);box-shadow:inset 0 0 0 1px #e9b96429,0 3px 12px #0003}
+body[data-screen="garage"] .engine-stage.equipped{border-color:#93c08a;background:#204735}
+body[data-screen="garage"] .engine-stage.future{opacity:.72}
+body[data-screen="garage"] .engine-stage-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-size:10px;line-height:1.45;color:#f6e4b7}
+body[data-screen="garage"] .engine-stage-top span{min-width:0;overflow-wrap:anywhere;font-weight:700}
+body[data-screen="garage"] .engine-stage-top b{flex:none;font-size:10px;color:#e8be71;font-weight:800;white-space:nowrap}
+body[data-screen="garage"] .engine-stage>small{display:block;margin:6px 0;color:#c2d5c0;font-size:9px;line-height:1.5}
+body[data-screen="garage"] .engine-stage button{display:block;width:100%;min-height:37px;margin-top:8px;padding:8px 7px;border-radius:6px;background:linear-gradient(130deg,#ecc579,#b98c43);color:#172d24;font-size:9px;font-weight:800;letter-spacing:.4px}
+body[data-screen="garage"] .engine-stage button:disabled{opacity:.58;cursor:not-allowed}
+body[data-screen="garage"] .engine-stage-status{display:inline-flex;padding:5px 8px;border-radius:13px;border:1px solid #8d9e7773;color:#bfcab8;font-size:8px;letter-spacing:.55px;font-weight:700}
+body[data-screen="garage"] .engine-stage.equipped .engine-stage-status{border-color:#acc88c;color:#d9efbe}
+@media(max-width:800px){body[data-screen="garage"] .engine-stage-top{font-size:11px}body[data-screen="garage"] .engine-stage>small{font-size:10px}}

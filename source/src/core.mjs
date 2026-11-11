@@ -6,6 +6,7 @@ import {normalizeCampaign,missionUnlocked,recordMission} from './campaign.mjs';
 import {roadCurvature,routeFor} from './routes.mjs';
 import {balanceFreightContract,missionDifficulty} from './mission-difficulty.mjs';
 import {VEHICLES,configuredVehicle,purchaseUnlocked} from './fleet.mjs';
+import {ENGINE_MAX_LEVEL,engineTopSpeed,engineAccelerationMultiplier} from './engine-tuning.mjs';
 export {VEHICLES} from './fleet.mjs';
 export const CONTRACTS = [
  {id:'m01',roadId:'ipes',tag:'01 · FRETE DE RECOMEÇO',name:'A Aurora Desperta',route:'Porto Salgueiro → Vila dos Ipês',description:'Ferramentas para a cooperativa. Um frete curto para reencontrar o caminho.',length:1800,time:180,weight:1.2,pay:1500,min:30,fragile:1,toll:0},
@@ -15,7 +16,7 @@ export const CONTRACTS = [
 ];
 CONTRACTS.forEach((c,i)=>{c.chapter=0;c.night=i===1;});CONTRACTS.push(...EXTRA_CONTRACTS);for(const c of CONTRACTS){if(c.chapter>0&&!c.race){c.weight=c.chapter===1?2.5:c.chapter===2?4.5:c.chapter===3?9:c.chapter===4?14:16;balanceFreightContract(c);}}
 export function freshSave(){return {version:1,money:1200,deliveries:0,wins:0,reputation:0,selected:'aurora',fleet:{aurora:{health:100,engine:0,brakes:0,color:VEHICLES[0].color,body:VEHICLES[0].defaultBody}},best:{},medals:{},campaign:{version:1,completed:[],bonusesClaimed:[],legacyAvailable:[]}};}
-export function loadSave(raw){try {const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.money)||s.money<0||!s.fleet?.aurora) return freshSave();for(const [id,t] of Object.entries(s.fleet)){if(!VEHICLES.some(v=>v.id===id))delete s.fleet[id];else{t.health=clamp(Number(t.health)||1,1,100);t.engine=clamp(Number(t.engine)||0,0,2);t.brakes=clamp(Number(t.brakes)||0,0,2);t.body=configuredVehicle(VEHICLES.find(v=>v.id===id),t.body).body;if(!/^#[0-9a-f]{6}$/i.test(t.color))t.color=VEHICLES.find(v=>v.id===id).color;}}if(!s.fleet[s.selected])s.selected='aurora';return {...freshSave(),...s,deliveries:Math.max(0,Number(s.deliveries)||0),wins:Math.max(0,Number(s.wins)||0),best:s.best||{},campaign:normalizeCampaign(s),medals:normalizeMedals(s.medals,normalizeCampaign(s).completed)};}catch{return freshSave();}}
+export function loadSave(raw){try {const s=JSON.parse(raw);if(s.version!==1||!Number.isFinite(s.money)||s.money<0||!s.fleet?.aurora) return freshSave();for(const [id,t] of Object.entries(s.fleet)){if(!VEHICLES.some(v=>v.id===id))delete s.fleet[id];else{t.health=clamp(Number(t.health)||1,1,100);t.engine=clamp(Math.trunc(Number(t.engine)||0),0,ENGINE_MAX_LEVEL);t.brakes=clamp(Math.trunc(Number(t.brakes)||0),0,2);t.body=configuredVehicle(VEHICLES.find(v=>v.id===id),t.body).body;if(!/^#[0-9a-f]{6}$/i.test(t.color))t.color=VEHICLES.find(v=>v.id===id).color;}}if(!s.fleet[s.selected])s.selected='aurora';return {...freshSave(),...s,deliveries:Math.max(0,Number(s.deliveries)||0),wins:Math.max(0,Number(s.wins)||0),best:s.best||{},campaign:normalizeCampaign(s),medals:normalizeMedals(s.medals,normalizeCampaign(s).completed)};}catch{return freshSave();}}
 export function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
 export function isUnlocked(c,s){return missionUnlocked(c.id,s);}
 export function settlement(c,{cargo,fuelUsed,healthLost,elapsed,won}){const success=cargo>=c.min&&elapsed<=c.time&&(!c.race||won);const gross=success?Math.round(c.pay*(c.race?1:clamp(cargo/100,.4,1))):0;const timeBonus=success?freightTimeBonus(c,{cargo,healthLost,elapsed}):0;const fuel=Math.ceil(fuelUsed*8);const repairs=Math.ceil(healthLost*8);return {success,gross,timeBonus,fuel,repairs,toll:c.toll,net:success?Math.max(0,gross+timeBonus-fuel-repairs-c.toll):0};}
@@ -23,8 +24,8 @@ export function purchase(s,id){const v=VEHICLES.find(v=>v.id===id);if(!v||s.flee
 export function upgrade(s,type){return installUpgrade(s,s.selected,type);}
 export function driveStep(state,input,vehicle,parts,contract,dt){
  const boosted=contract.race&&state.boost>0;
- const top=(vehicle.max+parts.engine*12+(boosted?15:0))/3.6,load=1-contract.weight/(vehicle.capacity*5);
- const acceleration=vehicle.accel*Math.max(.28,load)*(1+parts.engine*.14),massFactor=1+contract.weight/vehicle.capacity*.3;
+ const top=(engineTopSpeed(vehicle,parts.engine)+(boosted?15:0))/3.6,load=1-contract.weight/(vehicle.capacity*5);
+ const acceleration=vehicle.accel*Math.max(.28,load)*engineAccelerationMultiplier(parts.engine),massFactor=1+contract.weight/vehicle.capacity*.3;
  const braking=vehicle.brake*(1+parts.brakes*.25)/massFactor;
  const challenge=missionDifficulty(contract);
  if(input.gas)state.speed+=(acceleration+(boosted?4:0))*dt;
