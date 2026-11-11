@@ -105,7 +105,7 @@ export function detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber})
  const tread=rubber||new THREE.MeshStandardMaterial({color:'#1a2022',roughness:.96});
  const chassis=new THREE.MeshStandardMaterial({color:'#515f62',metalness:.41,roughness:.64});
  const reflector=new THREE.MeshStandardMaterial({color:'#db9639',roughness:.40});
- const rubber=new THREE.MeshStandardMaterial({color:'#131b1e',roughness:.95});
+ const mudflapRubber=rubber||new THREE.MeshStandardMaterial({color:'#131b1e',roughness:.95});
  for(const wheel of wheels){
   const side=wheel.userData.side,r=wheel.userData.radius;
   const lip=new THREE.Mesh(new THREE.TorusGeometry(r*.62,.036,6,20),polished);
@@ -128,7 +128,7 @@ export function detailRochedoAxles({root,wheels,layout,box,chrome,black,rubber})
  // Três eixos traseiros, com para-barros e suportes próprios.
  for(const z of layout.driveAxles){
   for(const side of [-1,1]){
-   box(root,.11,.21,.65,rubber,side*1.29,.57,z+.62,'saia de para-barro da tração');
+   box(root,.11,.21,.65,mudflapRubber,side*1.29,.57,z+.62,'saia de para-barro da tração');
    box(root,.085,.09,.25,reflector,side*1.33,.57,z+.65,'refletor por eixo de tração');
    box(root,.15,.11,1.28,chassis,side*1.13,1.25,z,'viga de suspensão traseira');
   }
