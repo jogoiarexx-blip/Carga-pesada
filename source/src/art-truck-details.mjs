@@ -67,12 +67,7 @@ export function addArtTruckDetails({model,group,root,config,fit,type,box,rod,bar
    rail('bumper',root,'protetor inferior de frente',[-w*.44,y-.22,z],[w*.44,y-.22,z],.025,chrome);
   }
  }
- if(a.visor){
-  const lv=type('visor'),z=front+c.windZ-.31;
-  put('visor',root,'filete cromado da viseira',c.width+.10,.028,.035,chrome,0,c.visorY-.01,z,false);
-  if(lv>=2)for(const side of [-1,1])put('visor',root,'aba lateral da viseira',.055,.11,.31,edge,side*(c.width/2+.035),c.visorY+.005,z+.11,false);
-  if(lv===3)for(let i=-3;i<=3;i++)put('visor',root,'luz da viseira',.14,.045,.035,glow,i*c.width*.12,c.visorY+.07,z-.025,false);
- }
+ // Viseiras são construídas inteiramente pelo módulo REV32 acima do para-brisa.
  if(a.roofSpots){
   const lv=type('roofSpots'),z=front+c.roofZ-c.roofDepth/2-.20;
   put('roofSpots',root,'placa inox de faróis',c.width*.91,.07,.09,chrome,0,c.roof+.06,z+.07,false);
