@@ -130,7 +130,7 @@ test('catálogo de motores mostra seis estágios, preços e ganhos sem exigênci
 });
 
 test('lojinha de buzinas integra a personalização e o botão móvel sem bloquear gameplay',()=>{
- assert.match(code,/renderHornShop\(save,previewId,money\)/);
+ assert.match(code,/renderHornShop\(save,previewId,money,hornFilter\)/);
  assert.match(code,/\['horns','BUZINAS'\]/);
  assert.match(code,/bindHornControls\(\)/);
  assert.match(code,/buyOrEquipHorn\(draft,previewId,id\)/);
@@ -148,7 +148,7 @@ test('buzinas possuem atalho direto na lateral e aparecem no topo da oficina',()
  assert.match(code,/\$\('garageHornShortcut'\)\.onclick=openHornStore/);
  assert.match(code,/garageTab==='workshop'&&workshopPanel==='horns'&&owned/);
  assert.match(code,/id="backToGarageServices"/);
- assert.match(code,/renderHornShop\(save,previewId,money\)/);
+ assert.match(code,/renderHornShop\(save,previewId,money,hornFilter\)/);
  assert.match(css,/REV36 — Acesso direto às buzinas/);
 });
 test('no notebook os cards não são reduzidos a uma faixa pela altura fixa',()=>{
@@ -163,7 +163,7 @@ test('a loja de buzinas oferece filtro, controle de volume e parada sem cobrar p
  assert.match(code,/hornFilter='all',hornPreviewVolume=\.85/);
  assert.match(code,/renderHornShop\(save,previewId,money,hornFilter\)/);
  assert.match(code,/data-horn-filter/);
- assert.match(code,/id="hornPreviewVolume"/);
+ assert.match(code,/\$\('hornPreviewVolume'\)/);
  assert.match(code,/\$\('garageDetails'\)\.scrollTop=top/);
  assert.match(code,/stopFactory:\(\)=>/);
  assert.match(css,/REV37 — Buzinas de melhor qualidade/);

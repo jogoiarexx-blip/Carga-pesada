@@ -122,20 +122,21 @@ test('volume zero realmente silencia a buzina',()=>{
  assert.equal(plays,0);
 });
 test('parar prévia finaliza os osciladores e libera os nós de áudio',()=>{
- let starts=0,ends=0,disconnects=0,gainDisconnects=0;
+ let starts=0,scheduledStops=0,manualStops=0,disconnects=0,gainDisconnects=0;
  const param=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}});
  const ctx={
   currentTime:0,destination:{},
   createGain:()=>({gain:param(),connect(){},disconnect(){gainDisconnects++}}),
   createBiquadFilter:()=>({type:'',frequency:param(),Q:param(),connect(){},disconnect(){gainDisconnects++}}),
-  createOscillator:()=>({type:'',frequency:param(),connect(){},start(){starts++},stop(){ends++},disconnect(){disconnects++}})
+  createOscillator:()=>({type:'',frequency:param(),connect(){},start(){starts++},stop(when){if(when===undefined)manualStops++;else scheduledStops++},disconnect(){disconnects++}})
  };
  const player=new HornPlayer({getContext:()=>ctx,getVolume:()=>.6});
  assert.equal(player.play('triple').generated,true);
  assert.ok(starts>=9);
  assert.equal(player.sources.size,starts);
  player.stop();
- assert.equal(ends,starts);
+ assert.equal(scheduledStops,starts);
+ assert.equal(manualStops,starts);
  assert.equal(disconnects,starts);
  assert.equal(player.sources.size,0);
  assert.equal(player.nodes.size,0);
