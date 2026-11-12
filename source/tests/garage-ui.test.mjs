@@ -158,3 +158,13 @@ test('no notebook os cards não são reduzidos a uma faixa pela altura fixa',()=
  assert.match(css,/max-width:1160px/);
  assert.match(css,/\.garage-horn-shortcut\{order:2/);
 });
+
+test('a loja de buzinas oferece filtro, controle de volume e parada sem cobrar por prévia',()=>{
+ assert.match(code,/hornFilter='all',hornPreviewVolume=\.85/);
+ assert.match(code,/renderHornShop\(save,previewId,money,hornFilter\)/);
+ assert.match(code,/data-horn-filter/);
+ assert.match(code,/id="hornPreviewVolume"/);
+ assert.match(code,/\$\('garageDetails'\)\.scrollTop=top/);
+ assert.match(code,/stopFactory:\(\)=>/);
+ assert.match(css,/REV37 — Buzinas de melhor qualidade/);
+});

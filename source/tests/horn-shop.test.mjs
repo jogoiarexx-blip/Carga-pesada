@@ -71,3 +71,73 @@ test('buzina original continua gravada; alternativas não exigem internet',()=>{
  assert.equal(utterances[0].lang,'pt-BR');
  player.play('air');assert.equal(factory,2); // sem Web Audio, modo reserva
 });
+
+
+test('o catálogo expandido preserva os IDs antigos e fornece três cornetas novas',()=>{
+ for(const name of ['train','triple','country'])assert.ok(findHorn(name));
+ assert.equal(new Set(HORN_CATALOG.map(h=>h.id)).size,HORN_CATALOG.length);
+ assert.ok(HORN_CATALOG.length>=12);
+});
+test('filtros deixam as falas e os estilos de buzina fáceis de encontrar',async()=>{
+ const {HORN_FILTERS,matchesHornFilter}=await import('../src/horn-shop.mjs');
+ assert.deepEqual(HORN_FILTERS.map(x=>x.id),['all','road','fun','voice']);
+ assert.equal(matchesHornFilter(findHorn('train'),'road'),true);
+ assert.equal(matchesHornFilter(findHorn('arreda'),'road'),false);
+ assert.equal(matchesHornFilter(findHorn('arreda'),'voice'),true);
+ const source=freshSave(),fmt=n=>'CR$ '+n,voice=renderHornShop(source,'aurora',fmt,'voice');
+ assert.equal((voice.match(/data-horn-buy=/g)||[]).length,3);
+ assert.match(voice,/Arreda aí!/);
+ assert.match(voice,/data-horn-filter="voice" aria-pressed="true"/);
+ const road=renderHornShop(source,'aurora',fmt,'road');
+ assert.ok((road.match(/data-horn-buy=/g)||[]).length>=6);
+ assert.doesNotMatch(road,/data-horn-preview="arreda"/);
+ const all=renderHornShop(source,'aurora',fmt);
+ assert.equal((all.match(/data-horn-buy=/g)||[]).length,HORN_CATALOG.length);
+ assert.match(all,/id="hornPreviewVolume"/);
+ assert.match(all,/id="stopHornPreview"/);
+});
+test('cada tipo de buzina tem harmônicos, notas e duração menor que dois segundos',async()=>{
+ const {HORN_PATTERNS,hornDuration}=await import('../src/horn-player.mjs');
+ for(const horn of HORN_CATALOG.filter(h=>h.kind!=='factory')){
+  assert.ok(HORN_PATTERNS[horn.kind],horn.id);
+  assert.ok(hornDuration(horn.kind)>0&&hornDuration(horn.kind)<2,horn.id);
+  assert.ok(HORN_PATTERNS[horn.kind].tones.length>=2);
+  assert.ok(HORN_PATTERNS[horn.kind].level<.3);
+ }
+ assert.notDeepEqual(HORN_PATTERNS.train.notes,HORN_PATTERNS.retro.notes);
+});
+test('sem voz em português o som reserva toca, sem pronúncia errada',()=>{
+ const speeches=[],voices={cancel(){},getVoices(){return [{lang:'en-US'}]},speak(u){speeches.push(u)}};
+ class FakeSpeech{constructor(s){this.text=s;}}
+ const player=new HornPlayer({getContext:()=>null,playFactory:()=>speeches.push('fallback'),getSpeech:()=>voices,getUtterance:()=>FakeSpeech});
+ const result=player.play('arreda');
+ assert.equal(result.voiced,false);
+ assert.match(result.reason,/português/);
+ assert.deepEqual(speeches,['fallback']);
+});
+test('volume zero realmente silencia a buzina',()=>{
+ let plays=0;
+ const player=new HornPlayer({getContext:()=>null,playFactory:()=>plays++,getVolume:()=>0});
+ assert.equal(player.play('air').silent,true);
+ assert.equal(plays,0);
+});
+test('parar prévia finaliza os osciladores e libera os nós de áudio',()=>{
+ let starts=0,ends=0,disconnects=0,gainDisconnects=0;
+ const param=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}});
+ const ctx={
+  currentTime:0,destination:{},
+  createGain:()=>({gain:param(),connect(){},disconnect(){gainDisconnects++}}),
+  createBiquadFilter:()=>({type:'',frequency:param(),Q:param(),connect(){},disconnect(){gainDisconnects++}}),
+  createOscillator:()=>({type:'',frequency:param(),connect(){},start(){starts++},stop(){ends++},disconnect(){disconnects++}})
+ };
+ const player=new HornPlayer({getContext:()=>ctx,getVolume:()=>.6});
+ assert.equal(player.play('triple').generated,true);
+ assert.ok(starts>=9);
+ assert.equal(player.sources.size,starts);
+ player.stop();
+ assert.equal(ends,starts);
+ assert.equal(disconnects,starts);
+ assert.equal(player.sources.size,0);
+ assert.equal(player.nodes.size,0);
+ assert.ok(gainDisconnects>0);
+});

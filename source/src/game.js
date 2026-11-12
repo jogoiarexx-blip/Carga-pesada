@@ -42,7 +42,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.42';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.43';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -223,7 +223,7 @@ function renderGarageDetails(){
    '<div class="garage-horns-top"><button id="backToGarageServices" type="button">‹ OUTROS SERVIÇOS</button>'+
    '<span class="eyebrow">PERSONALIZAÇÃO SONORA</span><h2>LOJA DE BUZINAS</h2>'+
    '<p class="garage-description">Escolha o toque do '+v.name+'. Ouça antes de comprar; as buzinas já adquiridas continuam disponíveis neste caminhão.</p></div>'+
-   renderHornShop(save,previewId,money);
+   renderHornShop(save,previewId,money,hornFilter);
   $('backToGarageServices').onclick=()=>{workshopPanel='parts';renderGarage();$('garageDetails').scrollTop=0;};
   bindHornControls();
   return;
@@ -249,13 +249,13 @@ function renderGarageDetails(){
  document.querySelectorAll('[data-paint]').forEach(button=>button.onclick=()=>{paintChoice=button.dataset.paint;player.userData.paint.color.set(paintChoice);renderer.colors?.delete(player.userData.paint);renderGarageDetails();});
  if($('applyPaint'))$('applyPaint').onclick=()=>{if(commitGarage(draft=>repaintTruck(draft,previewId,paintChoice))){paintChoice=null;updateGaragePreview();showWorkshopService('paint');toast('Pintura aplicada no '+v.name+'.');}};
 }
-let workshopPanel='parts',partGroup='Todas',serviceOpen=true;
+let workshopPanel='parts',partGroup='Todas',serviceOpen=true,hornFilter='all',hornPreviewVolume=.85;
 function checkoutUI(){if(!$('applyDecoration'))return;const q=quoteParts(save,previewId,draftDecoration),button=$('applyDecoration');button.disabled=!q.valid||!!q.reason;button.textContent=!q.valid?'ADQUIRA O CAMINHÃO PARA EQUIPAR':q.cost?'COMPRAR E EQUIPAR · '+money(q.cost):'EQUIPAR PEÇAS ADQUIRIDAS';$('checkoutCost').textContent=q.valid?(q.items.length+' nova(s) peça(s) · '+money(q.cost)):'Prévia de caminhão da loja';$('checkoutNote').textContent=q.reason||'Peças adquiridas continuam neste caminhão mesmo quando removidas.';}
 function decorationControls(){const d=draftDecoration,owned=ownedParts(save.fleet[previewId]);return `<section class="deko"><div class="workshop-nav" aria-label="Personalização">${[['parts','PEÇAS · '+Object.values(PARTS).reduce((sum,variants)=>sum+variants.length,0)],['art','ARTE'],['lights','LUZES'],['horns','BUZINAS']].map(([id,label])=>`<button data-workshop-panel="${id}" aria-pressed="${workshopPanel===id}">${label}</button>`).join('')}</div><div class="checkout-summary"><b id="checkoutCost"></b><p id="checkoutNote"></p></div>
 <div data-workshop-content="parts"><h3>CATÁLOGO DE PEÇAS</h3><p class="workshop-note">Escolha uma versão para ver no caminhão. Comprar e equipar confirma o valor total.</p><div class="part-groups">${['Todas','Cabine','Carroceria','Rodas','Luzes'].map(g=>`<button data-part-group="${g}" aria-pressed="${partGroup===g}">${g}</button>`).join('')}</div><div class="accessory-options">${Object.entries(ACCESSORIES).map(([key,label])=>`<article class="part-card" data-part-card="${PARTS[key][0].group}"><label class="deko-check"><input type="checkbox" data-accessory="${key}" ${d.accessories[key]?'checked':''}>${label}</label><select data-part-version="${key}" aria-label="Versão de ${label}">${PARTS[key].map(v=>`<option value="${v.id}" ${d.variants[key]===v.id?'selected':''}>${v.name} · ${owned.includes(key+':'+v.id)?'ADQUIRIDA':money(v.price)}</option>`).join('')}</select><small>${PARTS[key][0].group} · Ajustada à cabine e ao chassi</small></article>`).join('')}</div><div class="deko-presets"><strong>CONJUNTOS DE PERSONALIZAÇÃO</strong><div class="deko-preset-grid">${DEKOTORA_PRESETS.map(p=>`<button type="button" class="outline" data-deko-preset="${p.id}">${p.name}</button>`).join('')}</div><small>Visualize antes de comprar. A compra só ocorre após confirmação.</small></div><button class="outline" id="dekoFullPreview">EXPERIMENTAR CONJUNTO COMPLETO</button><label>TEXTO DO LETREIRO<input id="dekoSignText" maxlength="24" value="${d.signText.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="Nome do caminhão"></label></div>
 <div data-workshop-content="art"><h3>ARTE NA CARROCERIA</h3><p class="workshop-note">Importação e artes incluídas sem custo. Imagens ficam neste navegador.</p><label>PAINEL<select id="artTarget"><option value="both">Duas laterais</option><option value="left">Lateral esquerda</option><option value="right">Lateral direita</option><option value="rear">Traseira</option></select></label><label>ARTE<select id="artPreset">${Object.entries(PRESETS).map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label><button class="outline" id="previewArt">VER ARTE NO PAINEL</button><label class="upload-art">IMPORTAR JPG / PNG / WEBP<input id="artFile" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="workshop-note">Até 8 MB. Imagem otimizada e guardada neste navegador.</p><label>ENQUADRAMENTO<select id="artFit"><option value="cover" ${d.fit==='cover'?'selected':''}>Preencher (recorta as bordas)</option><option value="contain" ${d.fit==='contain'?'selected':''}>Imagem inteira (com margens)</option></select></label></div>
 <div data-workshop-content="lights"><h3>ILUMINAÇÃO DECORATIVA</h3><p class="workshop-note">Os padrões são gratuitos. Faróis, faixas e letreiros são adquiridos no catálogo de peças.</p><label class="deko-check"><input id="dekoEnabled" type="checkbox" ${d.lights?'checked':''}> Luzes na carroceria</label><label>EFEITO<select id="dekoPattern"><option value="steady">Fixo</option><option value="pulse">Pulsar suave</option><option value="chase">Sequencial</option></select></label><label>CORES<select id="dekoPalette"><option value="festival">Festival multicolorido</option><option value="amber">Âmbar</option><option value="cyan">Azul e ciano</option></select></label><p class="workshop-note">O horário é definido pela fase. As luzes permanecem equipadas de dia e à noite.</p></div>
-<div data-workshop-content="horns">${renderHornShop(save,previewId,money)}</div>
+<div data-workshop-content="horns">${renderHornShop(save,previewId,money,hornFilter)}</div>
 <div class="workshop-checkout"><button class="primary" id="applyDecoration">COMPRAR E EQUIPAR</button><button class="outline" id="discardPreview">DESCARTAR PRÉVIA</button><p id="decorationStatus" class="workshop-note">Escolher versões altera apenas a prévia. Peças visuais não dão vantagem mecânica.</p></div></section>`;}
 function workshopTabs(){document.querySelectorAll('[data-workshop-content]').forEach(el=>el.hidden=el.dataset.workshopContent!==workshopPanel);document.querySelectorAll('[data-workshop-panel]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.workshopPanel===workshopPanel)));document.querySelectorAll('[data-part-card]').forEach(el=>el.hidden=partGroup!=='Todas'&&el.dataset.partCard!==partGroup);document.querySelectorAll('[data-part-group]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.partGroup===partGroup)));}
 function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorationEpoch,redraw=()=>{renderer.colors?.clear();decorateTruck(player,draftDecoration);checkoutUI();$('decorationStatus').textContent='Alterações na prévia. Salve para equipar neste caminhão.';},setArt=(id,side=$('artTarget').value)=>{if(side==='both'){draftDecoration.left=id;draftDecoration.right=id;}else draftDecoration[side]=id;redraw();$('decorationStatus').textContent='Prévia atualizada. Clique em Salvar personalização para equipar.';};
@@ -274,20 +274,45 @@ function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorati
  $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;const quote=quoteParts(save,previewId,draftDecoration);if(!quote.valid||quote.reason){toast(quote.reason||'Não foi possível equipar.');return;}if(commitGarage(draft=>saveDecoration(draft,previewId,draftDecoration))){showWorkshopService('parts');$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');}};
 }
 function bindHornControls(){
+ const volume=$('hornPreviewVolume'),output=$('hornVolumeLabel');
+ if(volume){
+  volume.value=Math.round(hornPreviewVolume*100);
+  if(output)output.textContent=Math.round(hornPreviewVolume*100)+'%';
+  volume.oninput=e=>{
+   hornPreviewVolume=Math.max(0,Math.min(1,Number(e.target.value)/100));
+   if(output)output.textContent=Math.round(hornPreviewVolume*100)+'%';
+  };
+ }
+ const stop=$('stopHornPreview');
+ if(stop)stop.onclick=()=>{
+  hornEffects.stop();
+  if($('hornShopStatus'))$('hornShopStatus').textContent='Reprodução interrompida. Experimente outra buzina.';
+ };
+ document.querySelectorAll('[data-horn-filter]').forEach(button=>button.onclick=()=>{
+  hornFilter=button.dataset.hornFilter;
+  hornEffects.stop();
+  const top=$('garageDetails').scrollTop;
+  renderGarageDetails();
+  $('garageDetails').scrollTop=top;
+ });
  document.querySelectorAll('[data-horn-preview]').forEach(button=>button.onclick=()=>{
   const id=button.dataset.hornPreview;
   initAudio();audio?.ctx?.resume?.();
   const result=hornEffects.play(id);
   const status=$('hornShopStatus');
-  if(status)status.textContent=result.kind==='voice'&&!result.voiced?
-   'Este navegador não oferece voz. Prévia com buzina sonora alternativa.':'Prévia da buzina reproduzida; a compra é opcional.';
+  if(status)status.textContent=result.silent?
+   'O volume está em zero. Aumente o volume do teste ou dos efeitos sonoros.':
+   result.kind==='voice'&&!result.voiced?
+   (result.reason||'Este aparelho não oferece voz em português.')+' Prévia com som de reserva.':
+   result.kind==='voice'?'Fala enviada à voz em português do navegador. A compra é opcional.':
+   'Prévia de '+button.getAttribute('aria-label').replace(/^Ouvir /,'')+' acionada, sem gastar créditos.';
  });
  document.querySelectorAll('[data-horn-buy]').forEach(button=>button.onclick=()=>{
-  const id=button.dataset.hornBuy;
+  const id=button.dataset.hornBuy,top=$('garageDetails').scrollTop;
   if(commitGarage(draft=>buyOrEquipHorn(draft,previewId,id))){
-   const status=$('hornShopStatus');
-   if(status)status.textContent='Buzina instalada neste caminhão e salva na carreira.';
-   toast('Buzina instalada! Use H na estrada ou o botão no celular.');
+   $('garageDetails').scrollTop=top;
+   if($('hornShopStatus'))$('hornShopStatus').textContent='Buzina instalada e salva neste caminhão.';
+   toast('Buzina equipada! Use H, A no controle ou o botão no celular.');
   }
  });
 }
@@ -354,7 +379,7 @@ $('graphicsQuality').value=graphicsQuality;$('graphicsQuality').onchange=e=>{gra
 let music;let musicVolume=Math.max(0,Math.min(1,Number.isFinite(Number(save.musicVolume))?Number(save.musicVolume):.25));$('musicVolume').value=musicVolume;$('musicVolume').oninput=e=>{musicVolume=Number(e.target.value);save.musicVolume=musicVolume;music?.setVolume(musicVolume);persist();};
 let audio,sounds;let effectsVolume=.6;try{const stored=localStorage.getItem('carga-pesada-effects-volume');if(stored!==null&&Number.isFinite(Number(stored)))effectsVolume=Math.max(0,Math.min(1,Number(stored)));}catch{}
 function initAudio(){if(!sounds){sounds=new RecordedSounds();sounds.setVolume(effectsVolume);}if(!audio)try{const ctx=new AudioContext();audio={ctx};music=new RoadMusic(ctx,musicVolume);sounds?.enableAudioLoop(ctx);}catch{} }
-const hornEffects=new HornPlayer({getContext:()=>audio?.ctx,playFactory:()=>sounds?.horn(),getVolume:()=>effectsVolume});
+const hornEffects=new HornPlayer({getContext:()=>audio?.ctx,playFactory:()=>sounds?.horn(),stopFactory:()=>{if(sounds?.hornSound){sounds.hornSound.pause();sounds.hornSound.currentTime=0;}},getVolume:()=>effectsVolume*(mode==='garage'?hornPreviewVolume:1)});
 function horn(){if(mode==='drive'){initAudio();audio?.ctx?.resume?.();hornEffects.play(equippedHorn(save.fleet[save.selected]));}}
 
 const finishGate=new THREE.Group();const beamMat=new THREE.MeshBasicMaterial({color:'#b9d48e',transparent:true,opacity:.55});box(.3,7,.3,beamMat,finishGate,-7,3.5);box(.3,7,.3,beamMat,finishGate,7,3.5);box(14,.25,.3,beamMat,finishGate,0,7);const gateSign=textSign('ENTREGA  ↓',9,1.7);gateSign.position.set(0,6,0);finishGate.add(gateSign);scene.add(finishGate);finishGate.visible=false;
