@@ -42,7 +42,7 @@ let save=loadSave(savedRaw),mode='home',mission=null,run=null,session=null,playe
 let introShownThisSession=false;
 let night=false;
 const keys={}, scene=new THREE.Scene();scene.background=new THREE.Color('#a6bbb0');scene.fog=new THREE.FogExp2('#a6bbb0',.0019);
-let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.43';}
+let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});}catch(e){const replacement=document.createElement('canvas');replacement.id='world';replacement.setAttribute('aria-label','Mundo 3D de Carga Pesada, renderização compatível');$('world').replaceWith(replacement);renderer=new CompatibilityRenderer(replacement);document.querySelector('.build').textContent='v0.44';}
 let workshopScene=null;
 let graphicsQuality='balanced';try{graphicsQuality=normalizeGraphicsQuality(localStorage.getItem('carga-pesada-graphics'));}catch{}
 function applyGraphicsQuality(){renderer.setPixelRatio(graphicsPixelRatio(graphicsQuality,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);if(workshopScene)setWorkshopQuality(workshopScene,graphicsQuality);}
@@ -274,6 +274,16 @@ function bindDecorationControls(){if(!$('artTarget'))return;const epoch=decorati
  $('applyDecoration').onclick=()=>{draftDecoration.signText=normalizeDecoration({signText:$('dekoSignText').value}).signText;const quote=quoteParts(save,previewId,draftDecoration);if(!quote.valid||quote.reason){toast(quote.reason||'Não foi possível equipar.');return;}if(commitGarage(draft=>saveDecoration(draft,previewId,draftDecoration))){showWorkshopService('parts');$('decorationStatus').textContent='Personalização equipada e salva neste caminhão.';toast('Personalização equipada no '+VEHICLES.find(v=>v.id===previewId).name+'.');}};
 }
 function bindHornControls(){
+ const styleSelect=$('hornVoiceStyle');
+ if(styleSelect){
+  styleSelect.value=hornVoiceStyle;
+  styleSelect.onchange=e=>{
+   hornVoiceStyle=hornEffects.setVoiceStyle(e.target.value);
+   hornEffects.stop();
+   try{localStorage.setItem('carga-pesada-voice-style',hornVoiceStyle);}catch{}
+   if($('hornShopStatus'))$('hornShopStatus').textContent='Estilo '+e.target.selectedOptions[0].text+' selecionado. Teste as falas com OUVIR.';
+  };
+ }
  const volume=$('hornPreviewVolume'),output=$('hornVolumeLabel');
  if(volume){
   volume.value=Math.round(hornPreviewVolume*100);
@@ -302,6 +312,7 @@ function bindHornControls(){
   const status=$('hornShopStatus');
   if(status)status.textContent=result.silent?
    'O volume está em zero. Aumente o volume do teste ou dos efeitos sonoros.':
+   result.pending?'Preparando a voz brasileira disponível no aparelho…':
    result.kind==='voice'&&!result.voiced?
    (result.reason||'Este aparelho não oferece voz em português.')+' Prévia com som de reserva.':
    result.kind==='voice'?'Fala enviada à voz em português do navegador. A compra é opcional.':
@@ -379,7 +390,27 @@ $('graphicsQuality').value=graphicsQuality;$('graphicsQuality').onchange=e=>{gra
 let music;let musicVolume=Math.max(0,Math.min(1,Number.isFinite(Number(save.musicVolume))?Number(save.musicVolume):.25));$('musicVolume').value=musicVolume;$('musicVolume').oninput=e=>{musicVolume=Number(e.target.value);save.musicVolume=musicVolume;music?.setVolume(musicVolume);persist();};
 let audio,sounds;let effectsVolume=.6;try{const stored=localStorage.getItem('carga-pesada-effects-volume');if(stored!==null&&Number.isFinite(Number(stored)))effectsVolume=Math.max(0,Math.min(1,Number(stored)));}catch{}
 function initAudio(){if(!sounds){sounds=new RecordedSounds();sounds.setVolume(effectsVolume);}if(!audio)try{const ctx=new AudioContext();audio={ctx};music=new RoadMusic(ctx,musicVolume);sounds?.enableAudioLoop(ctx);}catch{} }
-const hornEffects=new HornPlayer({getContext:()=>audio?.ctx,playFactory:()=>sounds?.horn(),stopFactory:()=>{if(sounds?.hornSound){sounds.hornSound.pause();sounds.hornSound.currentTime=0;}},getVolume:()=>effectsVolume*(mode==='garage'?hornPreviewVolume:1)});
+let hornVoiceStyle='natural';try{hornVoiceStyle=localStorage.getItem('carga-pesada-voice-style')||'natural';}catch{}
+const hornEffects=new HornPlayer({
+ getContext:()=>audio?.ctx,
+ playFactory:()=>sounds?.horn(),
+ stopFactory:()=>{if(sounds?.hornSound){sounds.hornSound.pause();sounds.hornSound.currentTime=0;}},
+ getVolume:()=>effectsVolume*(mode==='garage'?hornPreviewVolume:1),
+ onVoiceStart:()=>{
+  // A fala precisa aparecer acima do motor e da música; não abaixa o volume da voz.
+  sounds?.setVolume(effectsVolume*.28);
+  music?.setVolume(musicVolume*.36);
+ },
+ onVoiceEnd:()=>{
+  sounds?.setVolume(effectsVolume);
+  music?.setVolume(musicVolume);
+ },
+ onVoiceStatus:message=>{
+  const status=$('hornShopStatus');
+  if(mode==='garage'&&status)status.textContent=message;
+ }
+});
+hornVoiceStyle=hornEffects.setVoiceStyle(hornVoiceStyle);
 function horn(){if(mode==='drive'){initAudio();audio?.ctx?.resume?.();hornEffects.play(equippedHorn(save.fleet[save.selected]));}}
 
 const finishGate=new THREE.Group();const beamMat=new THREE.MeshBasicMaterial({color:'#b9d48e',transparent:true,opacity:.55});box(.3,7,.3,beamMat,finishGate,-7,3.5);box(.3,7,.3,beamMat,finishGate,7,3.5);box(14,.25,.3,beamMat,finishGate,0,7);const gateSign=textSign('ENTREGA  ↓',9,1.7);gateSign.position.set(0,6,0);finishGate.add(gateSign);scene.add(finishGate);finishGate.visible=false;

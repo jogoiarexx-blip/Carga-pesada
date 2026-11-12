@@ -168,3 +168,14 @@ test('a loja de buzinas oferece filtro, controle de volume e parada sem cobrar p
  assert.match(code,/stopFactory:\(\)=>/);
  assert.match(css,/REV37 — Buzinas de melhor qualidade/);
 });
+
+test('falas brasileiras possuem estilo salvo e redução temporária do som de fundo',()=>{
+ assert.match(code,/hornVoiceStyle=localStorage\.getItem\('carga-pesada-voice-style'\)/);
+ assert.match(code,/hornEffects\.setVoiceStyle\(e\.target\.value\)/);
+ assert.match(code,/onVoiceStart:\(\)=>/);
+ assert.match(code,/sounds\?\.setVolume\(effectsVolume\*\.28\)/);
+ assert.match(code,/music\?\.setVolume\(musicVolume\*\.36\)/);
+ assert.match(code,/onVoiceEnd:\(\)=>/);
+ assert.match(code,/sounds\?\.setVolume\(effectsVolume\)/);
+ assert.match(css,/REV38 — Voz brasileira/);
+});

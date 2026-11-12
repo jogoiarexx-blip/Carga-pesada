@@ -142,3 +142,85 @@ test('parar prévia finaliza os osciladores e libera os nós de áudio',()=>{
  assert.equal(player.nodes.size,0);
  assert.ok(gainDisconnects>0);
 });
+
+
+test('prioriza uma voz brasileira natural quando há várias opções no dispositivo',async()=>{
+ const {selectPortugueseVoice}=await import('../src/horn-player.mjs');
+ const voices=[
+  {lang:'en-US',name:'English Neural'},
+  {lang:'pt-PT',name:'Português Portugal Natural'},
+  {lang:'pt-BR',name:'Brasileira simples'},
+  {lang:'pt-BR',name:'Microsoft Francisca Online (Natural) - Portuguese (Brazil)'}
+ ];
+ assert.equal(selectPortugueseVoice(voices).name,voices[3].name);
+ assert.equal(selectPortugueseVoice([{lang:'pt-PT',name:'Portugal'}]).lang,'pt-PT');
+ assert.equal(selectPortugueseVoice([{lang:'en-US',name:'English'}]),null);
+ assert.equal(selectPortugueseVoice([]),null);
+});
+test('as três falas usam entonações distintas e podem mudar de estilo',async()=>{
+ const {VOICE_STYLES}=await import('../src/horn-player.mjs');
+ assert.deepEqual(Object.keys(VOICE_STYLES),['natural','grave','animada']);
+ const list=[],speech={cancel(){},speak(u){list.push(u);},getVoices:()=>[{lang:'pt-BR',name:'Microsoft Natural'}]};
+ class Utterance{constructor(text){this.text=text;}}
+ const player=new HornPlayer({getSpeech:()=>speech,getUtterance:()=>Utterance});
+ for(const id of ['arreda','doidao','chegando'])assert.equal(player.play(id).voiced,true);
+ assert.deepEqual(list.map(u=>u.text),['Arreda aí!','Sai da frente, doidão!','Olha o caminhão chegando!']);
+ assert.ok(list[0].rate!==list[2].rate);
+ assert.ok(list[0].pitch!==list[2].pitch);
+ assert.equal(player.setVoiceStyle('grave'),'grave');
+ player.play('arreda');
+ assert.ok(list[3].pitch<list[0].pitch);
+ player.setVoiceStyle('animada');player.play('arreda');
+ assert.ok(list[4].pitch>list[0].pitch);
+ assert.equal(player.setVoiceStyle('invalid'),'natural');
+});
+test('a fala não mistura apito eletrônico, abaixa música e libera o volume ao terminar',()=>{
+ let ducks=0,restores=0,factory=0,utterance;
+ const ctx={
+  currentTime:0,destination:{},
+  createGain(){throw Error('Buzina sintética não deve tocar durante fala em português')},
+  createOscillator(){throw Error('Oscilador não deve mascarar a voz')}
+ };
+ const synth={cancel(){},speak(u){utterance=u;},getVoices:()=>[{lang:'pt-BR',name:'Natural'}]};
+ class Utterance{constructor(text){this.text=text;}}
+ const player=new HornPlayer({
+  getContext:()=>ctx,playFactory:()=>factory++,getSpeech:()=>synth,
+  getUtterance:()=>Utterance,onVoiceStart:()=>ducks++,onVoiceEnd:()=>restores++
+ });
+ assert.equal(player.play('arreda').voiced,true);
+ assert.equal(ducks,0);
+ utterance.onstart();
+ assert.equal(ducks,1);
+ utterance.onend();
+ assert.equal(restores,1);
+ assert.equal(factory,0);
+ player.play('chegando');
+ utterance.onstart();
+ player.stop();
+ assert.equal(ducks,2);
+ assert.equal(restores,2);
+ utterance.onerror?.();
+ assert.equal(factory,0);
+});
+test('cancelar fala aguardando vozes evita áudio atrasado depois de trocar de tela',async()=>{
+ let listener,removed=0,spoke=0;
+ const synth={
+  getVoices:()=>[],speak(){spoke++;},cancel(){},
+  addEventListener(name,fn){listener=fn;},
+  removeEventListener(){removed++;}
+ };
+ class Utterance{constructor(s){this.text=s;}}
+ const player=new HornPlayer({getSpeech:()=>synth,getUtterance:()=>Utterance});
+ const res=player.play('arreda');
+ assert.equal(res.pending,true);
+ player.stop();
+ listener();
+ assert.equal(spoke,0);
+ assert.ok(removed>=1);
+});
+test('novo seletor de entonação faz parte da loja de buzinas faladas',()=>{
+ const html=renderHornShop(freshSave(),'aurora',n=>'CR$ '+n,'voice');
+ assert.match(html,/id="hornVoiceStyle"/);
+ assert.match(html,/Grave de caminhoneiro/);
+ assert.match(html,/Animada/);
+});

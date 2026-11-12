@@ -738,3 +738,26 @@ body[data-screen="garage"] #stopHornPreview:focus-visible{outline:2px solid #f3d
  body[data-screen="garage"] .horn-filters button{font-size:10px;min-height:44px}
  body[data-screen="garage"] #stopHornPreview{min-height:44px}
 }
+
+
+/* REV38 — Voz brasileira: entonação, volume inteligível e feedback. */
+body[data-screen="garage"] .horn-voice-style{
+ display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:13px;
+ border:1px solid #b8a16a8c;border-radius:10px;
+ background:linear-gradient(135deg,#163e32,#0b2d26)
+}
+body[data-screen="garage"] .horn-voice-style label{
+ display:block;font:800 10px/1.4 Arial,sans-serif;letter-spacing:1.05px;color:#f4d8a5
+}
+body[data-screen="garage"] .horn-voice-style select{
+ display:block;min-height:45px;width:100%;border:1px solid #d5b575;
+ border-radius:7px;padding:9px 12px;background:#12352b;color:#fff0d5;
+ font:700 12px Arial,sans-serif;cursor:pointer
+}
+body[data-screen="garage"] .horn-voice-style select option{background:#102b23;color:#f5e8c9}
+body[data-screen="garage"] .horn-voice-style select:focus-visible{outline:2px solid #f5d78f;outline-offset:2px}
+body[data-screen="garage"] .horn-voice-style small{font:400 10px/1.55 Arial,sans-serif;color:#bfcfb8}
+body[data-screen="garage"] #hornShopStatus{padding:9px 11px;border-left:3px solid #e1b868;background:#15372e;border-radius:4px;min-height:30px}
+@media(max-width:800px){
+ body[data-screen="garage"] .horn-voice-style select{min-height:48px;font-size:14px}
+}
