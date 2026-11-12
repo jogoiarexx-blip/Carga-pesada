@@ -59,6 +59,7 @@ export function renderHornShop(save,truckId,money,filter='all'){
  return '<section class="horn-shop" aria-label="Loja de buzinas">'+
   '<h3>LOJINHA DE BUZINAS</h3><p class="workshop-note">Cornetas de estrada, toques musicais e falas engraçadas. Ouça antes de comprar. As compras ficam salvas neste caminhão.</p>'+
   '<p class="horn-voice-note">As falas usam a voz em português disponível no dispositivo; se não houver, toca uma buzina de reserva. Os demais sons funcionam sem internet.</p>'+
+  '<div class="horn-voice-style"><label for="hornVoiceStyle">ESTILO DAS BUZINAS FALADAS</label><select id="hornVoiceStyle" aria-label="Estilo de voz da buzina"><option value="natural">Natural</option><option value="grave">Grave de caminhoneiro</option><option value="animada">Animada</option></select><small>Escolha a entonação. A naturalidade depende da voz em português do navegador.</small></div>'+
   '<div class="horn-preview-tools"><label for="hornPreviewVolume">VOLUME DO TESTE <output id="hornVolumeLabel" for="hornPreviewVolume">85%</output></label>'+
   '<input id="hornPreviewVolume" type="range" min="0" max="100" step="5" value="85" aria-label="Volume da prévia da buzina">'+
   '<button id="stopHornPreview" type="button">■ PARAR SOM</button></div>'+
